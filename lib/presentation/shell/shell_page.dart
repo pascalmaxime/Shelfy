@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -13,6 +14,12 @@ class ShellPage extends StatelessWidget {
     (icon: Icons.favorite_outline, activeIcon: Icons.favorite, label: 'Souhaits', path: '/souhaits'),
   ];
 
+  // Détection par plateforme, pas par largeur d'écran
+  // → évite le bug en mode paysage sur iPhone
+  static bool get _isDesktopPlatform =>
+      defaultTargetPlatform != TargetPlatform.iOS &&
+      defaultTargetPlatform != TargetPlatform.android;
+
   int _selectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).uri.toString();
     for (int i = 0; i < _destinations.length; i++) {
@@ -23,7 +30,7 @@ class ShellPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = MediaQuery.sizeOf(context).width >= 600;
+    final isDesktop = _isDesktopPlatform;
 
     // Desktop : rail de navigation sur la gauche, toujours visible
     if (isDesktop) {
@@ -35,6 +42,13 @@ class ShellPage extends StatelessWidget {
               selectedIndex: selectedIndex,
               onDestinationSelected: (i) => context.go(_destinations[i].path),
               labelType: NavigationRailLabelType.all,
+              leading: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Image.asset(
+                  'assets/images/Logo-Shelfy.png',
+                  height: 48,
+                ),
+              ),
               destinations: [
                 for (final d in _destinations)
                   NavigationRailDestination(

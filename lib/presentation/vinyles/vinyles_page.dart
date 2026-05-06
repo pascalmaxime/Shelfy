@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class VinylesPage extends StatelessWidget {
   const VinylesPage({super.key});
@@ -8,6 +9,9 @@ class VinylesPage extends StatelessWidget {
     return CustomScrollView(
       slivers: [
         SliverAppBar.large(
+          leading: context.canPop()
+              ? BackButton(onPressed: () => context.pop())
+              : null,
           title: const Text('Vinyles'),
           actions: [
             IconButton(

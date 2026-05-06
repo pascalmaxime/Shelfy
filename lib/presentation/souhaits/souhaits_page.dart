@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class SouhaitePage extends StatefulWidget {
   const SouhaitePage({super.key});
@@ -50,8 +51,11 @@ class _SouhaitePageState extends State<SouhaitePage> {
 
     return CustomScrollView(
       slivers: [
-        const SliverAppBar.large(
-          title: Text('Liste de souhaits'),
+        SliverAppBar.large(
+          leading: context.canPop()
+              ? BackButton(onPressed: () => context.pop())
+              : null,
+          title: const Text('Liste de souhaits'),
         ),
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class FilmsPage extends StatelessWidget {
   const FilmsPage({super.key});
@@ -8,6 +9,10 @@ class FilmsPage extends StatelessWidget {
     return CustomScrollView(
       slivers: [
         SliverAppBar.large(
+          // Flèche retour uniquement si on a navigué depuis le menu (mobile)
+          leading: context.canPop()
+              ? BackButton(onPressed: () => context.pop())
+              : null,
           title: const Text('Films'),
           actions: [
             IconButton(

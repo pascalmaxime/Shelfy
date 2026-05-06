@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class BibliothequePage extends StatefulWidget {
   const BibliothequePage({super.key});
@@ -50,8 +51,11 @@ class _BibliothequePageState extends State<BibliothequePage> {
 
     return CustomScrollView(
       slivers: [
-        const SliverAppBar.large(
-          title: Text('Ma bibliothèque'),
+        SliverAppBar.large(
+          leading: context.canPop()
+              ? BackButton(onPressed: () => context.pop())
+              : null,
+          title: const Text('Ma bibliothèque'),
         ),
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
