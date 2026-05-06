@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../settings/settings_sheet.dart';
+import '../auth/auth_sheet.dart';
 
 class ShellPage extends StatelessWidget {
   const ShellPage({super.key, required this.child});
@@ -14,8 +16,6 @@ class ShellPage extends StatelessWidget {
     (icon: Icons.favorite_outline, activeIcon: Icons.favorite, label: 'Souhaits', path: '/souhaits'),
   ];
 
-  // Détection par plateforme, pas par largeur d'écran
-  // → évite le bug en mode paysage sur iPhone
   static bool get _isDesktopPlatform =>
       defaultTargetPlatform != TargetPlatform.iOS &&
       defaultTargetPlatform != TargetPlatform.android;
@@ -28,11 +28,28 @@ class ShellPage extends StatelessWidget {
     return 0;
   }
 
+  void _openSettings(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => const Dialog(
+        child: SizedBox(width: 400, child: SettingsSheet()),
+      ),
+    );
+  }
+
+  void _openAuth(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => const Dialog(
+        child: SizedBox(width: 420, child: AuthSheet()),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDesktop = _isDesktopPlatform;
 
-    // Desktop : rail de navigation sur la gauche, toujours visible
     if (isDesktop) {
       final selectedIndex = _selectedIndex(context);
       return Scaffold(
@@ -47,6 +64,29 @@ class ShellPage extends StatelessWidget {
                 child: Image.asset(
                   'assets/images/Logo-Shelfy.png',
                   height: 48,
+                ),
+              ),
+              trailing: Expanded(
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          onPressed: () => _openAuth(context),
+                          icon: const Icon(Icons.account_circle_outlined),
+                          tooltip: 'Mon compte',
+                        ),
+                        IconButton(
+                          onPressed: () => _openSettings(context),
+                          icon: const Icon(Icons.settings_outlined),
+                          tooltip: 'Paramètres',
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
               destinations: [
@@ -65,8 +105,6 @@ class ShellPage extends StatelessWidget {
       );
     }
 
-    // Mobile : pas de navigation persistante, juste le contenu
-    // La navigation se fait depuis MenuPage avec context.push()
     return Scaffold(body: child);
   }
 }

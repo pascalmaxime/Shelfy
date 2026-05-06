@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../settings/settings_sheet.dart';
+import '../auth/auth_sheet.dart';
 
 class MenuPage extends StatelessWidget {
   const MenuPage({super.key});
@@ -42,12 +44,40 @@ class MenuPage extends StatelessWidget {
     ),
   ];
 
+  void _openSettings(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => const SettingsSheet(),
+    );
+  }
+
+  void _openAuth(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => const AuthSheet(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Shelfy'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            onPressed: () => _openAuth(context),
+            icon: const Icon(Icons.account_circle_outlined),
+            tooltip: 'Mon compte',
+          ),
+          IconButton(
+            onPressed: () => _openSettings(context),
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Paramètres',
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -75,16 +105,18 @@ class MenuPage extends StatelessWidget {
                           children: [
                             Text(
                               item.label,
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               item.subtitle,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Colors.grey,
-                                  ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(color: Colors.grey),
                             ),
                           ],
                         ),
