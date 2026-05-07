@@ -24,6 +24,7 @@ final class Film extends MediaItem {
   final int? annee;
   final String? genre;
   final StatutFilm statut;
+  final double? note; // 0.5 – 5.0, null = non noté
 
   const Film({
     required this.id,
@@ -34,6 +35,7 @@ final class Film extends MediaItem {
     this.imageUrl,
     this.statut = StatutFilm.aVoir,
     this.enSouhaits = false,
+    this.note,
   });
 
   Film copyWith({
@@ -44,6 +46,8 @@ final class Film extends MediaItem {
     String? imageUrl,
     StatutFilm? statut,
     bool? enSouhaits,
+    double? note,
+    bool clearNote = false,
   }) =>
       Film(
         id: id,
@@ -54,5 +58,6 @@ final class Film extends MediaItem {
         imageUrl: imageUrl ?? this.imageUrl,
         statut: statut ?? this.statut,
         enSouhaits: enSouhaits ?? this.enSouhaits,
+        note: clearNote ? null : (note ?? this.note),
       );
 }

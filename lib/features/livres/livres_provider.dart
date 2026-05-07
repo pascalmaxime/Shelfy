@@ -26,6 +26,14 @@ class LivresNotifier extends StateNotifier<List<Livre>> {
           else
             l,
       ];
+
+  void changerNote(String id, double? note) => state = [
+        for (final l in state)
+          if (l.id == id)
+            l.copyWith(note: note, clearNote: note == null)
+          else
+            l,
+      ];
 }
 
 final livresProvider = StateNotifierProvider<LivresNotifier, List<Livre>>(

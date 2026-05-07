@@ -172,6 +172,8 @@ class _LivresPageState extends ConsumerState<LivresPage> {
                         ref.read(livresProvider.notifier).toggleSouhaits(livre.id),
                     onDelete: () =>
                         ref.read(livresProvider.notifier).supprimer(livre.id),
+                    onChangerNote: (note) =>
+                        ref.read(livresProvider.notifier).changerNote(livre.id, note),
                   );
                 },
                 childCount: localFiltered.length,
@@ -262,33 +264,46 @@ class _ApiSection extends ConsumerWidget {
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 12)),
           SliverToBoxAdapter(
-            child: SizedBox(
-              height: 220,
-              child: trending.when(
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
-                error: (e, _) => _ErrorTile(message: e.toString()),
-                data: (items) => ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  padding: EdgeInsets.zero,
-                  itemCount: items.length,
-                  separatorBuilder: (context, index) => const SizedBox(width: 12),
-                  itemBuilder: (ctx, i) {
-                    final r = items[i];
-                    return SizedBox(
-                      width: 150,
-                      child: ApiResultCard(
-                        titre: r.titre,
-                        sousTitre: r.auteur,
-                        annee: r.annee,
-                        imageUrl: r.imageUrl,
-                        typeIcon: Icons.menu_book_outlined,
-                        onAjouter: () => onAjouter(r.toLivre()),
-                      ),
-                    );
-                  },
-                ),
+            child: trending.when(
+              loading: () => const SizedBox(
+                height: 220,
+                child: Center(child: CircularProgressIndicator()),
               ),
+              error: (e, _) => _ErrorTile(message: e.toString()),
+              data: (items) => items.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Text(
+                        'Suggestions non disponibles pour le moment.',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    )
+                  : SizedBox(
+                      height: 220,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        padding: EdgeInsets.zero,
+                        itemCount: items.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(width: 12),
+                        itemBuilder: (ctx, i) {
+                          final r = items[i];
+                          return SizedBox(
+                            width: 150,
+                            child: ApiResultCard(
+                              titre: r.titre,
+                              sousTitre: r.auteur,
+                              annee: r.annee,
+                              imageUrl: r.imageUrl,
+                              typeIcon: Icons.menu_book_outlined,
+                              onAjouter: () => onAjouter(r.toLivre()),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
             ),
           ),
         ],

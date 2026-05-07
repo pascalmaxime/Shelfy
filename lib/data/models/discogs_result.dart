@@ -6,7 +6,7 @@ class DiscogsResult {
   final String? artiste;
   final int? annee;
   final String? imageUrl;
-  final String? genre;
+  final String? genreRaw; // Genre brut renvoyé par l'API (en anglais)
 
   const DiscogsResult({
     required this.id,
@@ -14,8 +14,55 @@ class DiscogsResult {
     this.artiste,
     this.annee,
     this.imageUrl,
-    this.genre,
+    this.genreRaw,
   });
+
+  /// Mapping des genres Discogs (en anglais) → genres français de l'app.
+  static const _genreMap = <String, String>{
+    'rock': 'Rock',
+    'jazz': 'Jazz',
+    'blues': 'Blues',
+    'hip hop': 'Hip-Hop',
+    'hip-hop': 'Hip-Hop',
+    'rap': 'Hip-Hop',
+    'electronic': 'Électronique',
+    'electronica': 'Électronique',
+    'electro': 'Électronique',
+    'techno': 'Électronique',
+    'house': 'Électronique',
+    'pop': 'Pop',
+    'classical': 'Classique',
+    'classical music': 'Classique',
+    'soul': 'Soul / R&B',
+    'r&b': 'Soul / R&B',
+    'rhythm & blues': 'Soul / R&B',
+    'funk / soul': 'Soul / R&B',
+    'funk': 'Funk',
+    'folk': 'Folk',
+    'folk, world, & country': 'Folk',
+    'country': 'Folk',
+    'world': 'Folk',
+    'metal': 'Métal',
+    'heavy metal': 'Métal',
+    'hard rock': 'Métal',
+    'reggae': 'Reggae',
+    'dub': 'Reggae',
+    'latin': 'Autre',
+    'stage & screen': 'Autre',
+    "children's": 'Autre',
+    'non-music': 'Autre',
+  };
+
+  /// Retourne le genre français correspondant au genre Discogs brut.
+  String? get genreFr {
+    if (genreRaw == null) return null;
+    final key = genreRaw!.toLowerCase().trim();
+    if (_genreMap.containsKey(key)) return _genreMap[key];
+    for (final entry in _genreMap.entries) {
+      if (key.contains(entry.key)) return entry.value;
+    }
+    return null;
+  }
 
   factory DiscogsResult.fromJson(Map<String, dynamic> json) {
     // Le titre Discogs est souvent "Artiste - Album", on les sépare
@@ -43,7 +90,7 @@ class DiscogsResult {
       artiste: artiste.isNotEmpty ? artiste : null,
       annee: annee,
       imageUrl: (coverImage != null && !isPlaceholder) ? coverImage : null,
-      genre: genres != null && genres.isNotEmpty ? genres.first as String : null,
+      genreRaw: genres != null && genres.isNotEmpty ? genres.first as String : null,
     );
   }
 
@@ -54,7 +101,7 @@ class DiscogsResult {
         artiste: artiste,
         annee: annee,
         imageUrl: imageUrl,
-        genre: genre,
+        genre: genreFr, // Genre mappé vers les options du formulaire
         statut: StatutVinyle.souhaite,
       );
 }

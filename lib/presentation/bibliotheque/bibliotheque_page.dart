@@ -112,6 +112,17 @@ class _BibliothequePageState extends ConsumerState<BibliothequePage> {
     }
   }
 
+  void _changerNote(MediaItem item, double? note) {
+    switch (item) {
+      case Film f:
+        ref.read(filmsProvider.notifier).changerNote(f.id, note);
+      case Livre l:
+        ref.read(livresProvider.notifier).changerNote(l.id, note);
+      case Vinyle v:
+        ref.read(vinylesProvider.notifier).changerNote(v.id, note);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final all = ref.watch(bibliothequeProvider);
@@ -234,6 +245,7 @@ class _BibliothequePageState extends ConsumerState<BibliothequePage> {
                     onToggleStatut: () => _toggleStatut(item),
                     onToggleSouhaits: () => _toggleSouhaits(item),
                     onDelete: () => _supprimer(item),
+                    onChangerNote: (note) => _changerNote(item, note),
                   );
                 },
                 childCount: filtered.length,

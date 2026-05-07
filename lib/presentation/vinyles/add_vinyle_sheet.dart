@@ -20,9 +20,19 @@ class _AddVinyleSheetState extends ConsumerState<AddVinyleSheet> {
       TextEditingController(text: widget.initial?.artiste);
   late final _anneeCtrl =
       TextEditingController(text: widget.initial?.annee?.toString());
+  String? _imageUrl;
   String? _genre;
   StatutVinyle _statut = StatutVinyle.souhaite;
   bool _enSouhaits = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _imageUrl = widget.initial?.imageUrl;
+    // Pré-sélectionne le genre de l'API si celui-ci est dans notre liste
+    final g = widget.initial?.genre;
+    if (g != null && _genres.contains(g)) _genre = g;
+  }
 
   static const _genres = [
     'Rock',
@@ -59,6 +69,7 @@ class _AddVinyleSheetState extends ConsumerState<AddVinyleSheet> {
                 : _artisteCtrl.text.trim(),
             annee: int.tryParse(_anneeCtrl.text.trim()),
             genre: _genre,
+            imageUrl: _imageUrl,
             statut: _statut,
             enSouhaits: _enSouhaits,
           ),
@@ -121,43 +132,34 @@ class _AddVinyleSheetState extends ConsumerState<AddVinyleSheet> {
             ),
             const SizedBox(height: 12),
 
-            // Année + Genre
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _anneeCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Année',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.number,
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) return null;
-                      final year = int.tryParse(v);
-                      if (year == null || year < 1900 || year > 2100) {
-                        return 'Invalide';
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    // ignore: deprecated_member_use
-                    value: _genre,
-                    decoration: const InputDecoration(
-                      labelText: 'Genre',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: _genres
-                        .map((g) => DropdownMenuItem(value: g, child: Text(g)))
-                        .toList(),
-                    onChanged: (v) => setState(() => _genre = v),
-                  ),
-                ),
-              ],
+            // Année
+            TextFormField(
+              controller: _anneeCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Année',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.number,
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return null;
+                final year = int.tryParse(v);
+                if (year == null || year < 1900 || year > 2100) return 'Invalide';
+                return null;
+              },
+            ),
+            const SizedBox(height: 12),
+            // Genre
+            DropdownButtonFormField<String>(
+              // ignore: deprecated_member_use
+              value: _genre,
+              decoration: const InputDecoration(
+                labelText: 'Genre',
+                border: OutlineInputBorder(),
+              ),
+              items: _genres
+                  .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                  .toList(),
+              onChanged: (v) => setState(() => _genre = v),
             ),
             const SizedBox(height: 20),
 

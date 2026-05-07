@@ -24,6 +24,7 @@ final class Livre extends MediaItem {
   final int? annee;
   final String? genre;
   final StatutLivre statut;
+  final double? note; // 0.5 – 5.0, null = non noté
 
   const Livre({
     required this.id,
@@ -34,6 +35,7 @@ final class Livre extends MediaItem {
     this.imageUrl,
     this.statut = StatutLivre.aLire,
     this.enSouhaits = false,
+    this.note,
   });
 
   Livre copyWith({
@@ -44,6 +46,8 @@ final class Livre extends MediaItem {
     String? imageUrl,
     StatutLivre? statut,
     bool? enSouhaits,
+    double? note,
+    bool clearNote = false,
   }) =>
       Livre(
         id: id,
@@ -54,5 +58,6 @@ final class Livre extends MediaItem {
         imageUrl: imageUrl ?? this.imageUrl,
         statut: statut ?? this.statut,
         enSouhaits: enSouhaits ?? this.enSouhaits,
+        note: clearNote ? null : (note ?? this.note),
       );
 }

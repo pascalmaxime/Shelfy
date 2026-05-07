@@ -1,1 +1,0 @@
- /Users/maximepascal/DEV/Shelfy/.dart_tool/flutter_build/e1f8e3f2e55f4ac864d33bad41d70971/native_assets.json: 

@@ -11,6 +11,7 @@ class ApiResultCard extends StatelessWidget {
     this.imageUrl,
     this.typeIcon,
     required this.onAjouter,
+    this.isLoading = false,
   });
 
   final String titre;
@@ -19,6 +20,9 @@ class ApiResultCard extends StatelessWidget {
   final String? imageUrl;
   final IconData? typeIcon;
   final VoidCallback onAjouter;
+
+  /// Quand true, remplace le bouton "+" par un spinner (fetch en cours).
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -66,22 +70,37 @@ class ApiResultCard extends StatelessWidget {
                     color: cs.surfaceContainerHighest,
                   ),
 
-                // Bouton ajouter (coin bas-droit)
+                // Bouton ajouter (coin bas-droit) — ou spinner si isLoading
                 Positioned(
                   bottom: 6,
                   right: 6,
                   child: Material(
-                    color: cs.primary,
+                    color: isLoading
+                        ? cs.surfaceContainerHighest
+                        : cs.primary,
                     shape: const CircleBorder(),
                     elevation: 2,
-                    child: InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: onAjouter,
-                      child: Padding(
-                        padding: const EdgeInsets.all(6),
-                        child: Icon(Icons.add, color: cs.onPrimary, size: 18),
-                      ),
-                    ),
+                    child: isLoading
+                        ? const Padding(
+                            padding: EdgeInsets.all(6),
+                            child: SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : InkWell(
+                            customBorder: const CircleBorder(),
+                            onTap: onAjouter,
+                            child: Padding(
+                              padding: const EdgeInsets.all(6),
+                              child: Icon(
+                                Icons.add,
+                                color: cs.onPrimary,
+                                size: 18,
+                              ),
+                            ),
+                          ),
                   ),
                 ),
               ],

@@ -26,6 +26,14 @@ class FilmsNotifier extends StateNotifier<List<Film>> {
           else
             f,
       ];
+
+  void changerNote(String id, double? note) => state = [
+        for (final f in state)
+          if (f.id == id)
+            f.copyWith(note: note, clearNote: note == null)
+          else
+            f,
+      ];
 }
 
 final filmsProvider = StateNotifierProvider<FilmsNotifier, List<Film>>(

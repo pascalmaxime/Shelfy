@@ -7,7 +7,7 @@ class GoogleBookResult {
   final int? annee;
   final String? imageUrl;
   final String? description;
-  final String? genre;
+  final String? genreRaw; // Catégorie brute renvoyée par l'API (en anglais)
 
   const GoogleBookResult({
     required this.id,
@@ -16,8 +16,63 @@ class GoogleBookResult {
     this.annee,
     this.imageUrl,
     this.description,
-    this.genre,
+    this.genreRaw,
   });
+
+  /// Mapping des catégories Google Books (en anglais) → genres français de l'app.
+  static const _genreMap = <String, String>{
+    'fiction': 'Roman',
+    'literary fiction': 'Roman',
+    'literary collections': 'Roman',
+    'general fiction': 'Roman',
+    'historical fiction': 'Roman',
+    'mystery & detective': 'Policier',
+    'mystery': 'Policier',
+    'detective': 'Policier',
+    'crime': 'Policier',
+    'suspense': 'Thriller',
+    'thrillers': 'Thriller',
+    'thriller': 'Thriller',
+    'psychological fiction': 'Thriller',
+    'science fiction': 'Science-Fiction',
+    'science-fiction': 'Science-Fiction',
+    'fantasy': 'Fantasy',
+    'epic fantasy': 'Fantasy',
+    'biography & autobiography': 'Biographie',
+    'biography': 'Biographie',
+    'autobiography': 'Biographie',
+    'memoirs': 'Biographie',
+    'history': 'Histoire',
+    'historical': 'Histoire',
+    'self-help': 'Développement personnel',
+    'personal development': 'Développement personnel',
+    'business & economics': 'Développement personnel',
+    'comics & graphic novels': 'BD / Manga',
+    'comics': 'BD / Manga',
+    'manga': 'BD / Manga',
+    'graphic novels': 'BD / Manga',
+    'poetry': 'Poésie',
+    'juvenile fiction': 'Jeunesse',
+    'juvenile nonfiction': 'Jeunesse',
+    "children's": 'Jeunesse',
+    'young adult': 'Jeunesse',
+    'literary criticism': 'Essai',
+    'philosophy': 'Essai',
+    'essays': 'Essai',
+    'social science': 'Essai',
+  };
+
+  /// Retourne le genre français correspondant à la catégorie API.
+  String? get genreFr {
+    if (genreRaw == null) return null;
+    final key = genreRaw!.toLowerCase().trim();
+    if (_genreMap.containsKey(key)) return _genreMap[key];
+    // Correspondance partielle (ex: "Fiction / Mystery & Detective" → 'Policier')
+    for (final entry in _genreMap.entries) {
+      if (key.contains(entry.key)) return entry.value;
+    }
+    return null;
+  }
 
   factory GoogleBookResult.fromJson(Map<String, dynamic> json) {
     final info = json['volumeInfo'] as Map<String, dynamic>? ?? {};
@@ -27,7 +82,8 @@ class GoogleBookResult {
         ? int.tryParse(dateStr.substring(0, 4))
         : null;
     final images = info['imageLinks'] as Map<String, dynamic>?;
-    String? imageUrl = (images?['thumbnail'] ?? images?['smallThumbnail']) as String?;
+    String? imageUrl =
+        (images?['thumbnail'] ?? images?['smallThumbnail']) as String?;
     // Forcer HTTPS
     if (imageUrl != null) imageUrl = imageUrl.replaceFirst('http://', 'https://');
     final categories = info['categories'] as List<dynamic>?;
@@ -41,7 +97,7 @@ class GoogleBookResult {
       annee: annee,
       imageUrl: imageUrl,
       description: info['description'] as String?,
-      genre: categories != null && categories.isNotEmpty
+      genreRaw: categories != null && categories.isNotEmpty
           ? categories.first as String
           : null,
     );
@@ -53,6 +109,7 @@ class GoogleBookResult {
         titre: titre,
         auteur: auteur,
         annee: annee,
+        genre: genreFr, // Genre mappé vers les options du formulaire
         imageUrl: imageUrl,
         statut: StatutLivre.aLire,
       );

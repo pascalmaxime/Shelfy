@@ -28,6 +28,14 @@ class VinylesNotifier extends StateNotifier<List<Vinyle>> {
           else
             v,
       ];
+
+  void changerNote(String id, double? note) => state = [
+        for (final v in state)
+          if (v.id == id)
+            v.copyWith(note: note, clearNote: note == null)
+          else
+            v,
+      ];
 }
 
 final vinylesProvider = StateNotifierProvider<VinylesNotifier, List<Vinyle>>(

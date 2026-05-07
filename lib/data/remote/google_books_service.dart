@@ -8,18 +8,37 @@ class GoogleBooksService {
   static Uri _url(Map<String, String> params) =>
       Uri.parse(_base).replace(queryParameters: params);
 
-  /// Livres populaires / nouveautés (bestsellers).
+  /// Livres populaires / nouveautés.
+  /// Ne lance jamais d'exception — retourne une liste vide si l'API échoue
+  /// (rate limit sans clé, réseau lent, etc.).
   Future<List<GoogleBookResult>> fetchPopular() async {
-    final res = await http.get(_url({
-      'q': 'bestseller',
-      'orderBy': 'relevance',
-      'maxResults': '20',
-      'printType': 'books',
-    })).timeout(const Duration(seconds: 10));
-    if (res.statusCode != 200) {
-      throw Exception('GoogleBooks popular: ${res.statusCode}');
-    }
-    return _parse(res.body);
+    // Essai 1 : bestsellers français
+    try {
+      final res = await http.get(_url({
+        'q': 'bestseller',
+        'orderBy': 'relevance',
+        'maxResults': '20',
+        'printType': 'books',
+        'langRestrict': 'fr',
+      })).timeout(const Duration(seconds: 10));
+      if (res.statusCode == 200) {
+        final results = _parse(res.body);
+        if (results.isNotEmpty) return results;
+      }
+    } catch (_) {}
+
+    // Essai 2 : livres de fiction populaires (sans restriction de langue)
+    try {
+      final res = await http.get(_url({
+        'q': 'subject:fiction',
+        'orderBy': 'relevance',
+        'maxResults': '20',
+        'printType': 'books',
+      })).timeout(const Duration(seconds: 10));
+      if (res.statusCode == 200) return _parse(res.body);
+    } catch (_) {}
+
+    return [];
   }
 
   /// Recherche de livres par titre / auteur.

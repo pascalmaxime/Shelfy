@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/media_item.dart';
+import 'star_rating.dart';
 
 /// Carte d'affichage unifiée pour Film, Livre et Vinyle.
 /// Utilise le pattern matching Dart 3 pour extraire les infos selon le type.
@@ -10,12 +11,14 @@ class MediaCard extends StatelessWidget {
     this.onToggleStatut,
     this.onToggleSouhaits,
     this.onDelete,
+    this.onChangerNote,
   });
 
   final MediaItem item;
   final VoidCallback? onToggleStatut;
   final VoidCallback? onToggleSouhaits;
   final VoidCallback? onDelete;
+  final ValueChanged<double?>? onChangerNote;
 
   String get _sousTitre => switch (item) {
         Film f => f.realisateur ?? '',
@@ -63,6 +66,12 @@ class MediaCard extends StatelessWidget {
         Film _ => Icons.movie_outlined,
         Livre _ => Icons.menu_book_outlined,
         Vinyle _ => Icons.album_outlined,
+      };
+
+  double? get _note => switch (item) {
+        Film f => f.note,
+        Livre l => l.note,
+        Vinyle v => v.note,
       };
 
   @override
@@ -167,7 +176,12 @@ class MediaCard extends StatelessWidget {
                     ),
                   ),
                 ],
-                const SizedBox(height: 6),
+                const SizedBox(height: 5),
+                StarRating(
+                  note: _note,
+                  onChanged: onChangerNote ?? (_) {},
+                ),
+                const SizedBox(height: 5),
                 Row(
                   children: [
                     Expanded(

@@ -16,7 +16,7 @@ class TmdbService {
     return Uri.parse('$_base$path').replace(queryParameters: params);
   }
 
-  /// Tendances de la semaine (films + séries).
+  /// Tendances de la semaine (films).
   Future<List<TmdbResult>> fetchTrending() async {
     final res = await http.get(_url('/trending/movie/week')).timeout(
           const Duration(seconds: 10),
@@ -43,5 +43,26 @@ class TmdbService {
         .map((e) => TmdbResult.fromJson(e as Map<String, dynamic>))
         .where((r) => r.titre.isNotEmpty)
         .toList();
+  }
+
+  /// Récupère le nom du réalisateur d'un film via l'endpoint /credits.
+  /// Retourne null si introuvable ou en cas d'erreur réseau.
+  Future<String?> fetchDirector(int movieId) async {
+    try {
+      final res = await http
+          .get(_url('/movie/$movieId/credits'))
+          .timeout(const Duration(seconds: 8));
+      if (res.statusCode != 200) return null;
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+      final crew = (data['crew'] as List<dynamic>? ?? [])
+          .cast<Map<String, dynamic>>();
+      final director = crew.firstWhere(
+        (c) => c['job'] == 'Director',
+        orElse: () => {},
+      );
+      return director['name'] as String?;
+    } catch (_) {
+      return null;
+    }
   }
 }

@@ -24,6 +24,7 @@ final class Vinyle extends MediaItem {
   final int? annee;
   final String? genre;
   final StatutVinyle statut;
+  final double? note; // 0.5 – 5.0, null = non noté
 
   const Vinyle({
     required this.id,
@@ -34,6 +35,7 @@ final class Vinyle extends MediaItem {
     this.imageUrl,
     this.statut = StatutVinyle.souhaite,
     this.enSouhaits = false,
+    this.note,
   });
 
   Vinyle copyWith({
@@ -44,6 +46,8 @@ final class Vinyle extends MediaItem {
     String? imageUrl,
     StatutVinyle? statut,
     bool? enSouhaits,
+    double? note,
+    bool clearNote = false,
   }) =>
       Vinyle(
         id: id,
@@ -54,5 +58,6 @@ final class Vinyle extends MediaItem {
         imageUrl: imageUrl ?? this.imageUrl,
         statut: statut ?? this.statut,
         enSouhaits: enSouhaits ?? this.enSouhaits,
+        note: clearNote ? null : (note ?? this.note),
       );
 }

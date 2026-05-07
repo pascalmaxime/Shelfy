@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../data/models/tmdb_result.dart';
+import '../../data/remote/tmdb_service.dart';
 import '../../domain/entities/media_item.dart';
 import '../../features/films/films_api_provider.dart';
 import '../../features/films/films_provider.dart';
@@ -19,8 +21,10 @@ class FilmsPage extends ConsumerStatefulWidget {
 
 class _FilmsPageState extends ConsumerState<FilmsPage> {
   final _searchCtrl = TextEditingController();
+  final _tmdb = TmdbService();
   Timer? _debounce;
-  String _localQuery = ''; // filtre local (collection)
+  String _localQuery = '';
+  int? _loadingId; // ID TMDB du film en cours de chargement (director fetch)
 
   @override
   void dispose() {
@@ -30,9 +34,7 @@ class _FilmsPageState extends ConsumerState<FilmsPage> {
   }
 
   void _onSearchChanged(String value) {
-    // Filtre local immédiat
     setState(() => _localQuery = value.toLowerCase());
-    // Debounce 500ms pour l'API
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () {
       ref.read(filmSearchQueryProvider.notifier).state = value.trim();
@@ -57,6 +59,21 @@ class _FilmsPageState extends ConsumerState<FilmsPage> {
     );
   }
 
+  /// Appelé quand l'utilisateur tape "+" sur une carte API.
+  /// Fetche le réalisateur en arrière-plan avant d'ouvrir le formulaire.
+  Future<void> _handleAjouter(TmdbResult result) async {
+    if (_loadingId != null) return; // Évite les double-taps
+    setState(() => _loadingId = result.id);
+    try {
+      final realisateur = await _tmdb.fetchDirector(result.id);
+      if (mounted) _openAddSheet(initial: result.toFilm(realisateur: realisateur));
+    } catch (_) {
+      if (mounted) _openAddSheet(initial: result.toFilm());
+    } finally {
+      if (mounted) setState(() => _loadingId = null);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final films = ref.watch(filmsProvider);
@@ -73,7 +90,6 @@ class _FilmsPageState extends ConsumerState<FilmsPage> {
 
     return CustomScrollView(
       slivers: [
-        // ── AppBar ────────────────────────────────────────────────
         SliverAppBar.large(
           leading: context.canPop()
               ? BackButton(onPressed: () => context.pop())
@@ -88,7 +104,6 @@ class _FilmsPageState extends ConsumerState<FilmsPage> {
           ],
         ),
 
-        // ── Barre de recherche ────────────────────────────────────
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
           sliver: SliverToBoxAdapter(
@@ -113,14 +128,13 @@ class _FilmsPageState extends ConsumerState<FilmsPage> {
           ),
         ),
 
-        // ── Section API : Tendances ou Résultats de recherche ─────
         _ApiSection(
           isSearching: isSearching,
           apiQuery: apiQuery,
-          onAjouter: (film) => _openAddSheet(initial: film),
+          onAjouter: _handleAjouter,
+          loadingId: _loadingId,
         ),
 
-        // ── Section locale : Ma collection ────────────────────────
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           sliver: SliverToBoxAdapter(
@@ -180,6 +194,8 @@ class _FilmsPageState extends ConsumerState<FilmsPage> {
                         ref.read(filmsProvider.notifier).toggleSouhaits(film.id),
                     onDelete: () =>
                         ref.read(filmsProvider.notifier).supprimer(film.id),
+                    onChangerNote: (note) =>
+                        ref.read(filmsProvider.notifier).changerNote(film.id, note),
                   );
                 },
                 childCount: localFiltered.length,
@@ -198,18 +214,19 @@ class _ApiSection extends ConsumerWidget {
     required this.isSearching,
     required this.apiQuery,
     required this.onAjouter,
+    this.loadingId,
   });
 
   final bool isSearching;
   final String apiQuery;
-  final void Function(Film film) onAjouter;
+  final Future<void> Function(TmdbResult) onAjouter;
+  final int? loadingId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
     if (isSearching) {
-      // ── Résultats de recherche ──────────────────────────────────
       final results = ref.watch(filmSearchResultsProvider);
       return SliverPadding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -257,7 +274,8 @@ class _ApiSection extends ConsumerWidget {
                             annee: r.annee,
                             imageUrl: r.imageUrl,
                             typeIcon: Icons.movie_outlined,
-                            onAjouter: () => onAjouter(r.toFilm()),
+                            isLoading: loadingId == r.id,
+                            onAjouter: () => onAjouter(r),
                           );
                         },
                         childCount: items.length,
@@ -269,7 +287,6 @@ class _ApiSection extends ConsumerWidget {
       );
     }
 
-    // ── Tendances TMDB ──────────────────────────────────────────
     final trending = ref.watch(trendingFilmsProvider);
     return SliverPadding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -292,7 +309,8 @@ class _ApiSection extends ConsumerWidget {
                   scrollDirection: Axis.horizontal,
                   padding: EdgeInsets.zero,
                   itemCount: items.length,
-                  separatorBuilder: (context, index) => const SizedBox(width: 12),
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(width: 12),
                   itemBuilder: (ctx, i) {
                     final r = items[i];
                     return SizedBox(
@@ -302,7 +320,8 @@ class _ApiSection extends ConsumerWidget {
                         annee: r.annee,
                         imageUrl: r.imageUrl,
                         typeIcon: Icons.movie_outlined,
-                        onAjouter: () => onAjouter(r.toFilm()),
+                        isLoading: loadingId == r.id,
+                        onAjouter: () => onAjouter(r),
                       ),
                     );
                   },

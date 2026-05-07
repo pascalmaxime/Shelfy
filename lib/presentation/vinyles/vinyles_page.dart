@@ -174,6 +174,9 @@ class _VinylesPageState extends ConsumerState<VinylesPage> {
                         .toggleSouhaits(vinyle.id),
                     onDelete: () =>
                         ref.read(vinylesProvider.notifier).supprimer(vinyle.id),
+                    onChangerNote: (note) => ref
+                        .read(vinylesProvider.notifier)
+                        .changerNote(vinyle.id, note),
                   );
                 },
                 childCount: localFiltered.length,
