@@ -17,6 +17,7 @@ class VinylesNotifier extends StateNotifier<List<Vinyle>> {
         'artiste': v.artiste,
         'annee': v.annee,
         'genre': v.genre,
+        'description': v.description,
         'image_url': v.imageUrl,
         'statut': v.statut.name,
         'en_souhaits': v.enSouhaits,
@@ -29,6 +30,7 @@ class VinylesNotifier extends StateNotifier<List<Vinyle>> {
         artiste: j['artiste'] as String?,
         annee: j['annee'] as int?,
         genre: j['genre'] as String?,
+        description: j['description'] as String?,
         imageUrl: j['image_url'] as String?,
         statut: StatutVinyle.values.firstWhere(
           (e) => e.name == j['statut'],

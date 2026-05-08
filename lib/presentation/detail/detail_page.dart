@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../domain/entities/media_item.dart';
 import '../../features/films/films_provider.dart';
 import '../../features/livres/livres_provider.dart';
@@ -15,7 +16,7 @@ class DetailPage extends ConsumerStatefulWidget {
 }
 
 class _DetailPageState extends ConsumerState<DetailPage> {
-  // ── Lecture de l'item en direct depuis les providers ──────────────────────
+  // ── Item réactif depuis le provider ──────────────────────────────────────
 
   MediaItem get _item {
     final init = widget.itemInitial;
@@ -93,16 +94,28 @@ class _DetailPageState extends ConsumerState<DetailPage> {
         case Vinyle v:
           ref.read(vinylesProvider.notifier).supprimer(v.id);
       }
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) context.pop(); // ← GoRouter (corrige le bug "page blanche")
     }
   }
 
-  // ── Helpers d'affichage ───────────────────────────────────────────────────
+  // ── Helpers ───────────────────────────────────────────────────────────────
 
   String get _sousTitre => switch (_item) {
         Film f => f.realisateur ?? '',
         Livre l => l.auteur ?? '',
         Vinyle v => v.artiste ?? '',
+      };
+
+  String get _sousTitreLabel => switch (_item) {
+        Film _ => 'Réalisation',
+        Livre _ => 'Auteur',
+        Vinyle _ => 'Artiste',
+      };
+
+  String? get _description => switch (_item) {
+        Film f => f.description,
+        Livre l => l.description,
+        Vinyle v => v.description,
       };
 
   String get _typeLabel => switch (_item) {
@@ -159,7 +172,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
         Vinyle _ => cs.onSecondaryContainer,
       };
 
-  // ── Build ──────────────────────────────────────────────────────────────────
+  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -170,12 +183,14 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // ── AppBar ─────────────────────────────────────────────────────────
+          // ── AppBar ──────────────────────────────────────────────────────────
           SliverAppBar.large(
-            title: Text(
-              item.titre,
-              overflow: TextOverflow.ellipsis,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_rounded),
+              tooltip: 'Retour',
+              onPressed: () => context.pop(),
             ),
+            title: Text(item.titre, overflow: TextOverflow.ellipsis),
             actions: [
               IconButton(
                 onPressed: _toggleSouhaits,
@@ -196,11 +211,11 @@ class _DetailPageState extends ConsumerState<DetailPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Image + infos côte à côte ──────────────────────────────
+                  // ── Image + infos ─────────────────────────────────────────
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Image
+                      // Poster / pochette / couverture
                       ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: SizedBox(
@@ -219,7 +234,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                       ),
                       const SizedBox(width: 16),
 
-                      // Infos
+                      // Méta-données
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,47 +247,56 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                             ),
                             const SizedBox(height: 10),
 
-                            // Sous-titre
+                            // Auteur / Réalisateur / Artiste
                             if (_sousTitre.isNotEmpty) ...[
+                              Text(
+                                _sousTitreLabel.toUpperCase(),
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: cs.onSurfaceVariant,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
                               Text(
                                 _sousTitre,
                                 style: theme.textTheme.titleMedium,
                               ),
+                              const SizedBox(height: 8),
+                            ],
+
+                            // Année
+                            if (_annee != null) ...[
+                              Row(
+                                children: [
+                                  Icon(Icons.calendar_today_outlined,
+                                      size: 14, color: cs.onSurfaceVariant),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    _annee.toString(),
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                        color: cs.onSurfaceVariant),
+                                  ),
+                                ],
+                              ),
                               const SizedBox(height: 6),
                             ],
 
-                            // Année + Genre
-                            if (_annee != null || _genre != null)
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 4,
-                                children: [
-                                  if (_annee != null)
-                                    Text(
-                                      _annee.toString(),
-                                      style: theme.textTheme.bodyMedium
-                                          ?.copyWith(
-                                              color: cs.onSurfaceVariant),
-                                    ),
-                                  if (_genre != null)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 3),
-                                      decoration: BoxDecoration(
-                                        color: cs.surfaceContainerHigh,
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text(
-                                        _genre!,
-                                        style: theme.textTheme.labelSmall,
-                                      ),
-                                    ),
-                                ],
+                            // Genre
+                            if (_genre != null) ...[
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: cs.surfaceContainerHigh,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(_genre!,
+                                    style: theme.textTheme.labelSmall),
                               ),
+                              const SizedBox(height: 10),
+                            ],
 
-                            const Spacer(),
-
-                            // Statut (tappable)
+                            // Statut (cliquable)
                             GestureDetector(
                               onTap: _toggleStatut,
                               child: Container(
@@ -321,7 +345,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                   const Divider(),
                   const SizedBox(height: 16),
 
-                  // ── Note ──────────────────────────────────────────────────
+                  // ── Ma note ──────────────────────────────────────────────
                   Text(
                     'MA NOTE',
                     style: theme.textTheme.labelSmall?.copyWith(
@@ -336,6 +360,27 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                     starSize: 28,
                   ),
 
+                  // ── Description / Synopsis ────────────────────────────────
+                  if (_description != null &&
+                      _description!.trim().isNotEmpty) ...[
+                    const SizedBox(height: 28),
+                    const Divider(),
+                    const SizedBox(height: 16),
+                    Text(
+                      switch (_item) {
+                        Film _ => 'SYNOPSIS',
+                        Livre _ => 'RÉSUMÉ',
+                        Vinyle _ => 'À PROPOS',
+                      },
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    _DescriptionText(text: _description!),
+                  ],
+
                   const SizedBox(height: 28),
                   const Divider(),
                   const SizedBox(height: 20),
@@ -348,7 +393,8 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(48),
                       foregroundColor: cs.error,
-                      side: BorderSide(color: cs.error.withValues(alpha: 0.5)),
+                      side:
+                          BorderSide(color: cs.error.withValues(alpha: 0.5)),
                     ),
                   ),
                 ],
@@ -388,8 +434,7 @@ class _TypeBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
           color: background,
           borderRadius: BorderRadius.circular(6),
@@ -397,9 +442,55 @@ class _TypeBadge extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-              fontSize: 11,
-              color: foreground,
-              fontWeight: FontWeight.w700),
+              fontSize: 11, color: foreground, fontWeight: FontWeight.w700),
         ),
       );
+}
+
+/// Texte de description avec "Voir plus" si le texte est long.
+class _DescriptionText extends StatefulWidget {
+  const _DescriptionText({required this.text});
+  final String text;
+
+  @override
+  State<_DescriptionText> createState() => _DescriptionTextState();
+}
+
+class _DescriptionTextState extends State<_DescriptionText> {
+  static const _maxLines = 4;
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.text,
+          style: Theme.of(context)
+              .textTheme
+              .bodyMedium
+              ?.copyWith(height: 1.6, color: cs.onSurfaceVariant),
+          maxLines: _expanded ? null : _maxLines,
+          overflow: _expanded ? TextOverflow.visible : TextOverflow.fade,
+        ),
+        // Bouton "Voir plus / Voir moins" seulement si le texte est long
+        if (widget.text.length > 250) ...[
+          const SizedBox(height: 4),
+          GestureDetector(
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: Text(
+              _expanded ? 'Voir moins' : 'Voir plus',
+              style: TextStyle(
+                color: cs.primary,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
 }

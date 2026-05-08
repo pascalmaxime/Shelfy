@@ -28,5 +28,16 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>shelfy</string>
+			</array>
+			<key>CFBundleURLName</key>
+			<string>io.shelfy.app</string>
+		</dict>
+	</array>
 </dict>
 </plist>

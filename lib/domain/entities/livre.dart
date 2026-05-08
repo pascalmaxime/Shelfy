@@ -23,6 +23,7 @@ final class Livre extends MediaItem {
   final String? auteur;
   final int? annee;
   final String? genre;
+  final String? description; // Résumé du livre
   final StatutLivre statut;
   final double? note; // 0.5 – 5.0, null = non noté
 
@@ -32,6 +33,7 @@ final class Livre extends MediaItem {
     this.auteur,
     this.annee,
     this.genre,
+    this.description,
     this.imageUrl,
     this.statut = StatutLivre.aLire,
     this.enSouhaits = false,
@@ -43,6 +45,7 @@ final class Livre extends MediaItem {
     String? auteur,
     int? annee,
     String? genre,
+    String? description,
     String? imageUrl,
     StatutLivre? statut,
     bool? enSouhaits,
@@ -55,6 +58,7 @@ final class Livre extends MediaItem {
         auteur: auteur ?? this.auteur,
         annee: annee ?? this.annee,
         genre: genre ?? this.genre,
+        description: description ?? this.description,
         imageUrl: imageUrl ?? this.imageUrl,
         statut: statut ?? this.statut,
         enSouhaits: enSouhaits ?? this.enSouhaits,

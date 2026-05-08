@@ -17,6 +17,7 @@ class LivresNotifier extends StateNotifier<List<Livre>> {
         'auteur': l.auteur,
         'annee': l.annee,
         'genre': l.genre,
+        'description': l.description,
         'image_url': l.imageUrl,
         'statut': l.statut.name,
         'en_souhaits': l.enSouhaits,
@@ -29,6 +30,7 @@ class LivresNotifier extends StateNotifier<List<Livre>> {
         auteur: j['auteur'] as String?,
         annee: j['annee'] as int?,
         genre: j['genre'] as String?,
+        description: j['description'] as String?,
         imageUrl: j['image_url'] as String?,
         statut: StatutLivre.values.firstWhere(
           (e) => e.name == j['statut'],

@@ -327,21 +327,29 @@ class _ErrorTile extends StatelessWidget {
   final String message;
 
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Row(
-          children: [
-            Icon(Icons.wifi_off_outlined,
-                color: Theme.of(context).colorScheme.error),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Impossible de charger les données. Vérifie ta connexion.',
-                style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant),
-              ),
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isQuota = message.contains('429') || message.contains('Quota');
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            isQuota ? Icons.key_off_outlined : Icons.wifi_off_outlined,
+            color: cs.error,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              isQuota
+                  ? 'Quota Google Books dépassé. Ajoute une clé API dans\nlib/core/config/api_keys.dart → googleBooks'
+                  : 'Impossible de charger les données. Vérifie ta connexion.',
+              style: TextStyle(color: cs.onSurfaceVariant),
             ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
+  }
 }

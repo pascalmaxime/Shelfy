@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/media_item.dart';
 import '../../features/films/films_provider.dart';
+import '../shared/image_picker_section.dart';
 
 class AddFilmSheet extends ConsumerStatefulWidget {
   const AddFilmSheet({super.key, this.initial});
@@ -149,6 +150,13 @@ class _AddFilmSheetState extends ConsumerState<AddFilmSheet> {
               },
             ),
             const SizedBox(height: 12),
+            // Photo
+            ImagePickerSection(
+              imageUrlInitiale: _imageUrl,
+              onImageChanged: (url) => setState(() => _imageUrl = url),
+            ),
+            const SizedBox(height: 12),
+
             // Genre
             DropdownButtonFormField<String>(
               // ignore: deprecated_member_use

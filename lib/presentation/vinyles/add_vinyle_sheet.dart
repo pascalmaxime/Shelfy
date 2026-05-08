@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/media_item.dart';
 import '../../features/vinyles/vinyles_provider.dart';
+import '../shared/image_picker_section.dart';
 
 class AddVinyleSheet extends ConsumerStatefulWidget {
   const AddVinyleSheet({super.key, this.initial});
@@ -148,6 +149,14 @@ class _AddVinyleSheetState extends ConsumerState<AddVinyleSheet> {
               },
             ),
             const SizedBox(height: 12),
+
+            // Photo
+            ImagePickerSection(
+              imageUrlInitiale: _imageUrl,
+              onImageChanged: (url) => setState(() => _imageUrl = url),
+            ),
+            const SizedBox(height: 12),
+
             // Genre
             DropdownButtonFormField<String>(
               // ignore: deprecated_member_use

@@ -23,6 +23,7 @@ final class Vinyle extends MediaItem {
   final String? artiste;
   final int? annee;
   final String? genre;
+  final String? description; // Notes de l'artiste, infos sur l'album
   final StatutVinyle statut;
   final double? note; // 0.5 – 5.0, null = non noté
 
@@ -32,6 +33,7 @@ final class Vinyle extends MediaItem {
     this.artiste,
     this.annee,
     this.genre,
+    this.description,
     this.imageUrl,
     this.statut = StatutVinyle.souhaite,
     this.enSouhaits = false,
@@ -43,6 +45,7 @@ final class Vinyle extends MediaItem {
     String? artiste,
     int? annee,
     String? genre,
+    String? description,
     String? imageUrl,
     StatutVinyle? statut,
     bool? enSouhaits,
@@ -55,6 +58,7 @@ final class Vinyle extends MediaItem {
         artiste: artiste ?? this.artiste,
         annee: annee ?? this.annee,
         genre: genre ?? this.genre,
+        description: description ?? this.description,
         imageUrl: imageUrl ?? this.imageUrl,
         statut: statut ?? this.statut,
         enSouhaits: enSouhaits ?? this.enSouhaits,

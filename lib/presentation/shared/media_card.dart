@@ -87,8 +87,8 @@ class MediaCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           // ── Image / Placeholder ──────────────────────────────────
           Expanded(
             child: Stack(
@@ -218,7 +218,7 @@ class MediaCard extends StatelessWidget {
               ],
             ),
           ),
-        ],
+          ],
         ),
       ),
     );

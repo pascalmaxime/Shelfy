@@ -23,6 +23,7 @@ final class Film extends MediaItem {
   final String? realisateur;
   final int? annee;
   final String? genre;
+  final String? description; // Synopsis, résumé
   final StatutFilm statut;
   final double? note; // 0.5 – 5.0, null = non noté
 
@@ -32,6 +33,7 @@ final class Film extends MediaItem {
     this.realisateur,
     this.annee,
     this.genre,
+    this.description,
     this.imageUrl,
     this.statut = StatutFilm.aVoir,
     this.enSouhaits = false,
@@ -43,6 +45,7 @@ final class Film extends MediaItem {
     String? realisateur,
     int? annee,
     String? genre,
+    String? description,
     String? imageUrl,
     StatutFilm? statut,
     bool? enSouhaits,
@@ -55,6 +58,7 @@ final class Film extends MediaItem {
         realisateur: realisateur ?? this.realisateur,
         annee: annee ?? this.annee,
         genre: genre ?? this.genre,
+        description: description ?? this.description,
         imageUrl: imageUrl ?? this.imageUrl,
         statut: statut ?? this.statut,
         enSouhaits: enSouhaits ?? this.enSouhaits,

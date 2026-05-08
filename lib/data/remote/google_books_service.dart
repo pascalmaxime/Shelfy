@@ -1,12 +1,20 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../../core/config/api_keys.dart';
 import '../models/google_book_result.dart';
 
 class GoogleBooksService {
   static const _base = 'https://www.googleapis.com/books/v1/volumes';
 
-  static Uri _url(Map<String, String> params) =>
-      Uri.parse(_base).replace(queryParameters: params);
+  static Uri _url(Map<String, String> params) {
+    final all = {
+      ...params,
+      // La clé API augmente le quota à 1 000 req/jour (gratuit).
+      // Si vide, Google utilise un quota anonyme partagé très limité (~100/jour).
+      if (ApiKeys.googleBooks.isNotEmpty) 'key': ApiKeys.googleBooks,
+    };
+    return Uri.parse(_base).replace(queryParameters: all);
+  }
 
   /// Livres populaires / nouveautés.
   /// Ne lance jamais d'exception — retourne une liste vide si l'API échoue
@@ -49,6 +57,11 @@ class GoogleBooksService {
       'maxResults': '20',
       'printType': 'books',
     })).timeout(const Duration(seconds: 10));
+
+    if (res.statusCode == 429) {
+      throw Exception(
+          'Quota Google Books dépassé. Ajoute une clé API dans api_keys.dart.');
+    }
     if (res.statusCode != 200) {
       throw Exception('GoogleBooks search: ${res.statusCode}');
     }

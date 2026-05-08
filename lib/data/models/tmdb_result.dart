@@ -84,6 +84,7 @@ class TmdbResult {
         realisateur: realisateur,
         annee: annee,
         genre: genre,
+        description: description,
         imageUrl: imageUrl,
         statut: StatutFilm.aVoir,
       );

@@ -23,10 +23,10 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			0pWIuk4Ru3HgTLF5duSDk/JF4po=
+			WctrL+w068W4nWZfoR3WcYdJS3Y=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"d29588ba4e11bb71e04cb17976e48393f245e29a"</string>
+			<string>cdhash H"59cb6b2fec34ebc5b89d665fa11dd67187494b76"</string>
 		</dict>
 		<key>Frameworks/FlutterMacOS.framework</key>
 		<dict>
@@ -41,10 +41,19 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			pOxMWd4uQEeYQEQBarBztKAMUWA=
+			LxOfvmacxGPdkZ5fdsN3qyIi03M=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"a4ec4c59de2e4047984044016ab073b4a00c5160"</string>
+			<string>cdhash H"2f139fbe669cc463dd919e5f76c377ab2222d373"</string>
+		</dict>
+		<key>Frameworks/file_selector_macos.framework</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			gjvO3sIt2Xy8PeDmHBt3zIgnBRc=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"823bcedec22dd97cbc3de0e61c1b77cc88270517"</string>
 		</dict>
 		<key>Frameworks/objective_c.framework</key>
 		<dict>
@@ -86,10 +95,10 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			Rxu+tkale3JmezCCu4T7Xfvqjss=
+			qZZaRGlZCDLgVVVXm2AFakblN2M=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"471bbeb646a57b72667b3082bb84fb5dfbea8ecb"</string>
+			<string>cdhash H"a9965a4469590832e05555579b60056a46e53763"</string>
 		</dict>
 		<key>Resources/AppIcon.icns</key>
 		<dict>

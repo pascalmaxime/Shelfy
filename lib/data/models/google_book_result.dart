@@ -109,7 +109,8 @@ class GoogleBookResult {
         titre: titre,
         auteur: auteur,
         annee: annee,
-        genre: genreFr, // Genre mappé vers les options du formulaire
+        genre: genreFr,
+        description: description,
         imageUrl: imageUrl,
         statut: StatutLivre.aLire,
       );

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +11,7 @@ import '../../features/livres/livres_provider.dart';
 import '../../features/vinyles/vinyles_provider.dart';
 import '../settings/settings_sheet.dart';
 import '../auth/auth_sheet.dart';
+import '../auth/reset_password_sheet.dart';
 
 class ShellPage extends ConsumerStatefulWidget {
   const ShellPage({super.key, required this.child});
@@ -21,6 +23,7 @@ class ShellPage extends ConsumerStatefulWidget {
 
 class _ShellPageState extends ConsumerState<ShellPage> {
   late final StreamSubscription<AuthState> _authSub;
+  StreamSubscription<Uri>? _linkSub;
 
   static const _destinations = [
     (icon: Icons.movie_outlined, activeIcon: Icons.movie, label: 'Films', path: '/films'),
@@ -51,11 +54,51 @@ class _ShellPageState extends ConsumerState<ShellPage> {
     if (Supabase.instance.client.auth.currentUser != null) {
       Future.microtask(_chargerTout);
     }
+
+    // Écoute des deep links (ex: shelfy://reset-password?code=xxx)
+    _setupDeepLinks();
+  }
+
+  Future<void> _setupDeepLinks() async {
+    final appLinks = AppLinks();
+
+    // Lien reçu au démarrage à froid
+    final initialLink = await appLinks.getInitialLink();
+    if (initialLink != null) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      if (mounted) _handleDeepLink(initialLink);
+    }
+
+    // Liens reçus pendant que l'app tourne
+    _linkSub = appLinks.uriLinkStream.listen(
+      (uri) => _handleDeepLink(uri),
+      onError: (_) {},
+    );
+  }
+
+  Future<void> _handleDeepLink(Uri uri) async {
+    if (uri.scheme != 'shelfy') return;
+
+    if (uri.host == 'reset-password') {
+      final code = uri.queryParameters['code'];
+      if (code == null || !mounted) return;
+      try {
+        await Supabase.instance.client.auth.exchangeCodeForSession(code);
+        if (mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => const ResetPasswordSheet(),
+          );
+        }
+      } catch (_) {}
+    }
   }
 
   @override
   void dispose() {
     _authSub.cancel();
+    _linkSub?.cancel();
     super.dispose();
   }
 

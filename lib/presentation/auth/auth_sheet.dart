@@ -90,7 +90,10 @@ class _AuthSheetState extends State<AuthSheet>
       _error = null;
     });
     try {
-      await _client.auth.resetPasswordForEmail(email);
+      await _client.auth.resetPasswordForEmail(
+        email,
+        redirectTo: 'shelfy://reset-password',
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('E-mail de réinitialisation envoyé !'),

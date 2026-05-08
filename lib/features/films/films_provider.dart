@@ -17,6 +17,7 @@ class FilmsNotifier extends StateNotifier<List<Film>> {
         'realisateur': f.realisateur,
         'annee': f.annee,
         'genre': f.genre,
+        'description': f.description,
         'image_url': f.imageUrl,
         'statut': f.statut.name,
         'en_souhaits': f.enSouhaits,
@@ -29,6 +30,7 @@ class FilmsNotifier extends StateNotifier<List<Film>> {
         realisateur: j['realisateur'] as String?,
         annee: j['annee'] as int?,
         genre: j['genre'] as String?,
+        description: j['description'] as String?,
         imageUrl: j['image_url'] as String?,
         statut: StatutFilm.values.firstWhere(
           (e) => e.name == j['statut'],

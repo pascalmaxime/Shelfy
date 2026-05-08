@@ -66,5 +66,22 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Shelfy utilise ta photothèque pour ajouter une image à ta collection.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Shelfy utilise l'appareil photo pour prendre une photo d'un élément de ta collection.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Shelfy peut sauvegarder des images dans ta photothèque.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>shelfy</string>
+			</array>
+			<key>CFBundleURLName</key>
+			<string>io.shelfy.app</string>
+		</dict>
+	</array>
 </dict>
 </plist>
