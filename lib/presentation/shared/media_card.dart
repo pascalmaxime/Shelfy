@@ -12,6 +12,7 @@ class MediaCard extends StatelessWidget {
     this.onToggleSouhaits,
     this.onDelete,
     this.onChangerNote,
+    this.onTap,
   });
 
   final MediaItem item;
@@ -19,6 +20,7 @@ class MediaCard extends StatelessWidget {
   final VoidCallback? onToggleSouhaits;
   final VoidCallback? onDelete;
   final ValueChanged<double?>? onChangerNote;
+  final VoidCallback? onTap;
 
   String get _sousTitre => switch (item) {
         Film f => f.realisateur ?? '',
@@ -82,7 +84,9 @@ class MediaCard extends StatelessWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       elevation: 1,
-      child: Column(
+      child: InkWell(
+        onTap: onTap,
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Image / Placeholder ──────────────────────────────────
@@ -215,6 +219,7 @@ class MediaCard extends StatelessWidget {
             ),
           ),
         ],
+        ),
       ),
     );
   }

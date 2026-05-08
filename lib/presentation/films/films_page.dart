@@ -59,19 +59,28 @@ class _FilmsPageState extends ConsumerState<FilmsPage> {
     );
   }
 
-  /// Appelé quand l'utilisateur tape "+" sur une carte API.
-  /// Fetche le réalisateur en arrière-plan avant d'ouvrir le formulaire.
+  /// Tape "+" sur une carte API : fetche le réalisateur puis ajoute directement.
   Future<void> _handleAjouter(TmdbResult result) async {
-    if (_loadingId != null) return; // Évite les double-taps
+    if (_loadingId != null) return;
     setState(() => _loadingId = result.id);
+    Film film;
     try {
       final realisateur = await _tmdb.fetchDirector(result.id);
-      if (mounted) _openAddSheet(initial: result.toFilm(realisateur: realisateur));
+      film = result.toFilm(realisateur: realisateur);
     } catch (_) {
-      if (mounted) _openAddSheet(initial: result.toFilm());
+      film = result.toFilm();
     } finally {
       if (mounted) setState(() => _loadingId = null);
     }
+    if (!mounted) return;
+    ref.read(filmsProvider.notifier).ajouter(film);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('"${film.titre}" ajouté à ta collection !'),
+      action: SnackBarAction(
+        label: 'Voir',
+        onPressed: () => context.push('/detail', extra: film),
+      ),
+    ));
   }
 
   @override
@@ -188,6 +197,7 @@ class _FilmsPageState extends ConsumerState<FilmsPage> {
                   final film = localFiltered[i];
                   return MediaCard(
                     item: film,
+                    onTap: () => context.push('/detail', extra: film),
                     onToggleStatut: () =>
                         ref.read(filmsProvider.notifier).toggleStatut(film.id),
                     onToggleSouhaits: () =>

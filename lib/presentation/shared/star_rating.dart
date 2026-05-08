@@ -9,6 +9,7 @@ class StarRating extends StatelessWidget {
     super.key,
     required this.note,
     required this.onChanged,
+    this.starSize = 13.0,
   });
 
   /// Valeur actuelle, 0.5 – 5.0. null = non noté.
@@ -16,6 +17,9 @@ class StarRating extends StatelessWidget {
 
   /// Appelé avec la nouvelle valeur (null pour effacer la note).
   final ValueChanged<double?> onChanged;
+
+  /// Taille de chaque étoile en px.
+  final double starSize;
 
   String get _label {
     if (note == null) return '—/10';
@@ -25,8 +29,7 @@ class StarRating extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    const starSize = 13.0;
-    const starPadH = 1.5;
+    final starPadH = starSize * 0.12;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -40,15 +43,13 @@ class StarRating extends StatelessWidget {
           return GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTapDown: (details) {
-              // Zone de l'étoile : starSize + 2*starPadH px de large
-              // Moitié gauche → demi-étoile, moitié droite → étoile entière
-              const center = starSize / 2 + starPadH;
+              final center = starSize / 2 + starPadH;
               final isHalf = details.localPosition.dx < center;
               final newNote = isHalf ? i + 0.5 : threshold.toDouble();
               onChanged(note == newNote ? null : newNote);
             },
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: starPadH),
+              padding: EdgeInsets.symmetric(horizontal: starPadH),
               child: Icon(
                 filled
                     ? Icons.star_rounded

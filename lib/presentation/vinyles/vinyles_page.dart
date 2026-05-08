@@ -111,7 +111,16 @@ class _VinylesPageState extends ConsumerState<VinylesPage> {
         _ApiSection(
           isSearching: isSearching,
           apiQuery: apiQuery,
-          onAjouter: (vinyle) => _openAddSheet(initial: vinyle),
+          onAjouter: (vinyle) {
+            ref.read(vinylesProvider.notifier).ajouter(vinyle);
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('"${vinyle.titre}" ajouté à ta collection !'),
+              action: SnackBarAction(
+                label: 'Voir',
+                onPressed: () => context.push('/detail', extra: vinyle),
+              ),
+            ));
+          },
         ),
 
         // ── Ma collection ─────────────────────────────────────────
@@ -166,6 +175,7 @@ class _VinylesPageState extends ConsumerState<VinylesPage> {
                   final vinyle = localFiltered[i];
                   return MediaCard(
                     item: vinyle,
+                    onTap: () => context.push('/detail', extra: vinyle),
                     onToggleStatut: () => ref
                         .read(vinylesProvider.notifier)
                         .toggleStatut(vinyle.id),

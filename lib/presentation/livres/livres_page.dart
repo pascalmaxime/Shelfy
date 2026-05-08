@@ -111,7 +111,16 @@ class _LivresPageState extends ConsumerState<LivresPage> {
         _ApiSection(
           isSearching: isSearching,
           apiQuery: apiQuery,
-          onAjouter: (livre) => _openAddSheet(initial: livre),
+          onAjouter: (livre) {
+            ref.read(livresProvider.notifier).ajouter(livre);
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('"${livre.titre}" ajouté à ta collection !'),
+              action: SnackBarAction(
+                label: 'Voir',
+                onPressed: () => context.push('/detail', extra: livre),
+              ),
+            ));
+          },
         ),
 
         // ── Ma collection ─────────────────────────────────────────
@@ -166,6 +175,7 @@ class _LivresPageState extends ConsumerState<LivresPage> {
                   final livre = localFiltered[i];
                   return MediaCard(
                     item: livre,
+                    onTap: () => context.push('/detail', extra: livre),
                     onToggleStatut: () =>
                         ref.read(livresProvider.notifier).toggleStatut(livre.id),
                     onToggleSouhaits: () =>

@@ -1,12 +1,26 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../features/auth/auth_provider.dart';
+import '../../features/films/films_provider.dart';
+import '../../features/livres/livres_provider.dart';
+import '../../features/vinyles/vinyles_provider.dart';
 import '../settings/settings_sheet.dart';
 import '../auth/auth_sheet.dart';
 
-class ShellPage extends StatelessWidget {
+class ShellPage extends ConsumerStatefulWidget {
   const ShellPage({super.key, required this.child});
   final Widget child;
+
+  @override
+  ConsumerState<ShellPage> createState() => _ShellPageState();
+}
+
+class _ShellPageState extends ConsumerState<ShellPage> {
+  late final StreamSubscription<AuthState> _authSub;
 
   static const _destinations = [
     (icon: Icons.movie_outlined, activeIcon: Icons.movie, label: 'Films', path: '/films'),
@@ -19,6 +33,43 @@ class ShellPage extends StatelessWidget {
   static bool get _isDesktopPlatform =>
       defaultTargetPlatform != TargetPlatform.iOS &&
       defaultTargetPlatform != TargetPlatform.android;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Écoute les changements d'auth pour charger / vider les données
+    _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((event) {
+      if (event.event == AuthChangeEvent.signedIn) {
+        _chargerTout();
+      } else if (event.event == AuthChangeEvent.signedOut) {
+        _viderTout();
+      }
+    });
+
+    // Chargement initial si déjà connecté
+    if (Supabase.instance.client.auth.currentUser != null) {
+      Future.microtask(_chargerTout);
+    }
+  }
+
+  @override
+  void dispose() {
+    _authSub.cancel();
+    super.dispose();
+  }
+
+  void _chargerTout() {
+    ref.read(filmsProvider.notifier).charger();
+    ref.read(livresProvider.notifier).charger();
+    ref.read(vinylesProvider.notifier).charger();
+  }
+
+  void _viderTout() {
+    ref.read(filmsProvider.notifier).vider();
+    ref.read(livresProvider.notifier).vider();
+    ref.read(vinylesProvider.notifier).vider();
+  }
 
   int _selectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).uri.toString();
@@ -49,6 +100,8 @@ class ShellPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDesktop = _isDesktopPlatform;
+    final user = ref.watch(currentUserProvider);
+    final isConnecte = user != null;
 
     if (isDesktop) {
       final selectedIndex = _selectedIndex(context);
@@ -76,8 +129,17 @@ class ShellPage extends StatelessWidget {
                       children: [
                         IconButton(
                           onPressed: () => _openAuth(context),
-                          icon: const Icon(Icons.account_circle_outlined),
-                          tooltip: 'Mon compte',
+                          icon: Icon(
+                            isConnecte
+                                ? Icons.account_circle
+                                : Icons.account_circle_outlined,
+                            color: isConnecte
+                                ? Theme.of(context).colorScheme.primary
+                                : null,
+                          ),
+                          tooltip: isConnecte
+                              ? user.email ?? 'Mon compte'
+                              : 'Se connecter',
                         ),
                         IconButton(
                           onPressed: () => _openSettings(context),
@@ -99,12 +161,12 @@ class ShellPage extends StatelessWidget {
               ],
             ),
             const VerticalDivider(thickness: 1, width: 1),
-            Expanded(child: child),
+            Expanded(child: widget.child),
           ],
         ),
       );
     }
 
-    return Scaffold(body: child);
+    return Scaffold(body: widget.child);
   }
 }

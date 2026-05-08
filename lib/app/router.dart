@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
+import '../domain/entities/media_item.dart';
 import '../presentation/shell/shell_page.dart';
 import '../presentation/menu/menu_page.dart';
 import '../presentation/films/films_page.dart';
@@ -7,6 +8,7 @@ import '../presentation/livres/livres_page.dart';
 import '../presentation/vinyles/vinyles_page.dart';
 import '../presentation/bibliotheque/bibliotheque_page.dart';
 import '../presentation/souhaits/souhaits_page.dart';
+import '../presentation/detail/detail_page.dart';
 
 // Sur mobile on commence sur le menu, sur desktop directement sur Films
 bool get _isMobile =>
@@ -43,6 +45,12 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: '/souhaits',
           builder: (context, state) => const SouhaitePage(),
+        ),
+        GoRoute(
+          path: '/detail',
+          builder: (context, state) => DetailPage(
+            itemInitial: state.extra as MediaItem,
+          ),
         ),
       ],
     ),

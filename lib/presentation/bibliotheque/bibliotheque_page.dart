@@ -242,6 +242,7 @@ class _BibliothequePageState extends ConsumerState<BibliothequePage> {
                   final item = filtered[i];
                   return MediaCard(
                     item: item,
+                    onTap: () => context.push('/detail', extra: item),
                     onToggleStatut: () => _toggleStatut(item),
                     onToggleSouhaits: () => _toggleSouhaits(item),
                     onDelete: () => _supprimer(item),

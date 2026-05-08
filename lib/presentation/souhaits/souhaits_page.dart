@@ -218,8 +218,8 @@ class _SouhaitePageState extends ConsumerState<SouhaitePage> {
                   final item = filtered[i];
                   return MediaCard(
                     item: item,
+                    onTap: () => context.push('/detail', extra: item),
                     onToggleStatut: () => _toggleStatut(item),
-                    // Retirer des souhaits via le cœur
                     onToggleSouhaits: () => _toggleSouhaits(item),
                   );
                 },
