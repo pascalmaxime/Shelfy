@@ -11,7 +11,8 @@
       "versionDate": "2026-05-09",
       "downloadURL": "https://github.com/pascalmaxime/Shelfy/releases/download/v1.0.0/shelfy.ipa",
       "localizedDescription": "Ta bibliothèque multimédia personnelle",
-      "iconURL": "https://raw.githubusercontent.com/pascalmaxime/Shelfy/main/assets/icon.png"
+      "iconURL": "https://raw.githubusercontent.com/pascalmaxime/Shelfy/main/assets/icon.png",
+      "size": 8698781
     }
   ]
 }
