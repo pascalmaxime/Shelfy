@@ -22,10 +22,27 @@
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>io.shelfy.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>shelfy</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Shelfy utilise l'appareil photo pour prendre une photo d'un élément de ta collection.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Shelfy peut sauvegarder des images dans ta photothèque.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Shelfy utilise ta photothèque pour ajouter une image à ta collection.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -65,23 +82,6 @@
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Shelfy utilise ta photothèque pour ajouter une image à ta collection.</string>
-	<key>NSCameraUsageDescription</key>
-	<string>Shelfy utilise l'appareil photo pour prendre une photo d'un élément de ta collection.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Shelfy peut sauvegarder des images dans ta photothèque.</string>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>shelfy</string>
-			</array>
-			<key>CFBundleURLName</key>
-			<string>io.shelfy.app</string>
-		</dict>
 	</array>
 </dict>
 </plist>

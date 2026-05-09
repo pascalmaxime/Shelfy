@@ -1,0 +1,15 @@
+{
+  "name": "Shelfy Source",
+  "identifier": "com.pascalmaxime.shelfy",
+  "apps": [
+    {
+      "name": "Shelfy",
+      "bundleIdentifier": "com.pascalmaxime.shelfy",
+      "developerName": "Pascal Maxime",
+      "version": "1.0.0",
+      "versionDate": "2026-05-09",
+      "downloadURL": "https://github.com/pascalmaxime/Shelfy/releases/download/v1.0.0/shelfy.ipa",
+      "localizedDescription": "Ta bibliothèque multimédia personnelle"
+    }
+  ]
+}
