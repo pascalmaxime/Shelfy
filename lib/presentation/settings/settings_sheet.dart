@@ -51,9 +51,9 @@ class SettingsSheet extends ConsumerWidget {
                 icon: Icon(Icons.dark_mode_outlined),
               ),
               ButtonSegment(
-                value: AppThemeOption.grey,
-                label: Text('Gris'),
-                icon: Icon(Icons.contrast_outlined),
+                value: AppThemeOption.system,
+                label: Text('Système'),
+                icon: Icon(Icons.brightness_auto_outlined),
               ),
             ],
             selected: {option},

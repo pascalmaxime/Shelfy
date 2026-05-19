@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/discogs_result.dart';
 import '../../data/remote/discogs_service.dart';
+export '../../data/remote/discogs_service.dart' show MarketStats;
 
 final _discogs = DiscogsService();
 
@@ -20,3 +21,10 @@ final vinyleSearchResultsProvider =
   if (query.isEmpty) return [];
   return _discogs.search(query);
 });
+
+/// Prix et statistiques de marché Discogs pour un ID de release donné.
+/// Mis en cache tant que la page détail est ouverte (autoDispose).
+final vinyleMarketStatsProvider =
+    FutureProvider.autoDispose.family<MarketStats?, int>(
+  (ref, releaseId) => _discogs.fetchMarketStats(releaseId),
+);

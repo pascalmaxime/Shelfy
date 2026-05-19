@@ -56,4 +56,35 @@ class DiscogsService {
         .where((v) => v.titre.isNotEmpty)
         .toList();
   }
+
+  /// Récupère les statistiques de marché Discogs pour une release donnée.
+  /// Retourne null si indisponible (pas de résultats, erreur réseau…).
+  Future<MarketStats?> fetchMarketStats(int releaseId) async {
+    try {
+      final uri =
+          Uri.parse('https://api.discogs.com/marketplace/stats/$releaseId');
+      final res = await http
+          .get(uri, headers: _headers)
+          .timeout(const Duration(seconds: 8));
+      if (res.statusCode != 200) return null;
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+      final lowestPrice =
+          (data['lowest_price']?['value'] as num?)?.toDouble();
+      final numForSale = data['num_for_sale'] as int?;
+      return MarketStats(lowestPrice: lowestPrice, numForSale: numForSale);
+    } catch (_) {
+      return null;
+    }
+  }
+}
+
+/// Données de marché Discogs pour un vinyle.
+class MarketStats {
+  const MarketStats({this.lowestPrice, this.numForSale});
+
+  /// Prix le plus bas sur le marché (en USD — Discogs renvoie toujours USD).
+  final double? lowestPrice;
+
+  /// Nombre d'annonces actives.
+  final int? numForSale;
 }

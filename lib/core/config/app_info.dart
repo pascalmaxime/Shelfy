@@ -11,7 +11,7 @@ class AppInfo {
 
   /// Numéro de version affiché dans les Paramètres → "Version 1.0.0"
   /// ⬅️  À modifier manuellement à chaque release
-  static const String version = '1.0.0';
+  static const String version = 'Bêta : 1.1.0';
 
   /// Année de création — mis à jour si besoin dans le copyright
   static const int anneeCreation = 2026;

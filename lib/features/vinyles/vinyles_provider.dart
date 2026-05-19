@@ -22,6 +22,9 @@ class VinylesNotifier extends StateNotifier<List<Vinyle>> {
         'statut': v.statut.name,
         'en_souhaits': v.enSouhaits,
         'note': v.note,
+        'discogs_id': v.discogsId,
+        'prix_achat': v.prixAchat,
+        'mode_acquisition': v.modeAcquisition?.name,
       };
 
   static Vinyle _fromJson(Map<String, dynamic> j) => Vinyle(
@@ -38,6 +41,14 @@ class VinylesNotifier extends StateNotifier<List<Vinyle>> {
         ),
         enSouhaits: (j['en_souhaits'] as bool?) ?? false,
         note: (j['note'] as num?)?.toDouble(),
+        discogsId: j['discogs_id'] as int?,
+        prixAchat: (j['prix_achat'] as num?)?.toDouble(),
+        modeAcquisition: j['mode_acquisition'] == null
+            ? null
+            : ModeAcquisition.values.firstWhere(
+                (e) => e.name == j['mode_acquisition'],
+                orElse: () => ModeAcquisition.achete,
+              ),
       );
 
   // ── Sync fire-and-forget ──────────────────────────────────────────────────
@@ -70,6 +81,14 @@ class VinylesNotifier extends StateNotifier<List<Vinyle>> {
   void ajouter(Vinyle vinyle) {
     state = [...state, vinyle];
     _sync(() => _db.from('vinyles').insert(_toJson(vinyle)));
+  }
+
+  void modifier(Vinyle vinyle) {
+    state = [
+      for (final v in state)
+        if (v.id == vinyle.id) vinyle else v,
+    ];
+    _sync(() => _db.from('vinyles').upsert(_toJson(vinyle)));
   }
 
   void supprimer(String id) {

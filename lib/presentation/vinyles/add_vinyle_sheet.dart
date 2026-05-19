@@ -5,10 +5,23 @@ import '../../features/vinyles/vinyles_provider.dart';
 import '../shared/image_picker_section.dart';
 
 class AddVinyleSheet extends ConsumerStatefulWidget {
-  const AddVinyleSheet({super.key, this.initial});
+  const AddVinyleSheet({
+    super.key,
+    this.initial,
+    this.existingId,
+    this.onSaved,
+  });
 
-  /// Vinyle pré-rempli depuis un résultat API (optionnel).
+  /// Vinyle pré-rempli (depuis API Discogs ou depuis la bibliothèque en édition).
   final Vinyle? initial;
+
+  /// Si fourni, on est en mode édition : on modifie le vinyle existant avec cet ID.
+  final String? existingId;
+
+  /// Appelé après sauvegarde avec le vinyle créé / modifié.
+  final void Function(Vinyle vinyle)? onSaved;
+
+  bool get _isEditing => existingId != null;
 
   @override
   ConsumerState<AddVinyleSheet> createState() => _AddVinyleSheetState();
@@ -16,22 +29,36 @@ class AddVinyleSheet extends ConsumerStatefulWidget {
 
 class _AddVinyleSheetState extends ConsumerState<AddVinyleSheet> {
   final _formKey = GlobalKey<FormState>();
-  late final _titreCtrl = TextEditingController(text: widget.initial?.titre);
-  late final _artisteCtrl =
-      TextEditingController(text: widget.initial?.artiste);
-  late final _anneeCtrl =
-      TextEditingController(text: widget.initial?.annee?.toString());
+
+  late final TextEditingController _titreCtrl;
+  late final TextEditingController _artisteCtrl;
+  late final TextEditingController _anneeCtrl;
+  late final TextEditingController _prixCtrl;
+
   String? _imageUrl;
   String? _genre;
   StatutVinyle _statut = StatutVinyle.souhaite;
   bool _enSouhaits = false;
+  ModeAcquisition _modeAcquisition = ModeAcquisition.achete;
 
   @override
   void initState() {
     super.initState();
-    _imageUrl = widget.initial?.imageUrl;
-    // Pré-sélectionne le genre de l'API si celui-ci est dans notre liste
-    final g = widget.initial?.genre;
+    final v = widget.initial;
+    _titreCtrl = TextEditingController(text: v?.titre ?? '');
+    _artisteCtrl = TextEditingController(text: v?.artiste ?? '');
+    _anneeCtrl = TextEditingController(text: v?.annee?.toString() ?? '');
+    _prixCtrl = TextEditingController(
+      text: v?.prixAchat != null ? v!.prixAchat!.toStringAsFixed(2) : '',
+    );
+    _imageUrl = v?.imageUrl;
+
+    if (v?.statut != null) _statut = v!.statut;
+    if (v?.enSouhaits == true) _enSouhaits = true;
+    if (v?.modeAcquisition != null) _modeAcquisition = v!.modeAcquisition!;
+
+    // Pré-sélectionne le genre si dans notre liste
+    final g = v?.genre;
     if (g != null && _genres.contains(g)) _genre = g;
   }
 
@@ -56,32 +83,53 @@ class _AddVinyleSheetState extends ConsumerState<AddVinyleSheet> {
     _titreCtrl.dispose();
     _artisteCtrl.dispose();
     _anneeCtrl.dispose();
+    _prixCtrl.dispose();
     super.dispose();
   }
 
   void _valider() {
     if (!_formKey.currentState!.validate()) return;
-    ref.read(vinylesProvider.notifier).ajouter(
-          Vinyle(
-            id: DateTime.now().microsecondsSinceEpoch.toString(),
-            titre: _titreCtrl.text.trim(),
-            artiste: _artisteCtrl.text.trim().isEmpty
-                ? null
-                : _artisteCtrl.text.trim(),
-            annee: int.tryParse(_anneeCtrl.text.trim()),
-            genre: _genre,
-            imageUrl: _imageUrl,
-            statut: _statut,
-            enSouhaits: _enSouhaits,
-          ),
-        );
+
+    final prixStr = _prixCtrl.text.trim().replaceAll(',', '.');
+    final prixAchat = _modeAcquisition == ModeAcquisition.achete &&
+            prixStr.isNotEmpty
+        ? double.tryParse(prixStr)
+        : null;
+
+    final vinyle = Vinyle(
+      id: widget.existingId ?? DateTime.now().microsecondsSinceEpoch.toString(),
+      titre: _titreCtrl.text.trim(),
+      artiste: _artisteCtrl.text.trim().isEmpty
+          ? null
+          : _artisteCtrl.text.trim(),
+      annee: int.tryParse(_anneeCtrl.text.trim()),
+      genre: _genre,
+      imageUrl: _imageUrl,
+      statut: _statut,
+      enSouhaits: _enSouhaits,
+      modeAcquisition: _modeAcquisition,
+      prixAchat: prixAchat,
+      discogsId: widget.initial?.discogsId,
+      description: widget.initial?.description,
+      note: widget.initial?.note,
+    );
+
+    if (widget._isEditing) {
+      ref.read(vinylesProvider.notifier).modifier(vinyle);
+    } else {
+      ref.read(vinylesProvider.notifier).ajouter(vinyle);
+    }
+
     Navigator.of(context).pop();
+    widget.onSaved?.call(vinyle);
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
+    final isEditing = widget._isEditing;
+
+    return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(
         24,
         16,
@@ -106,7 +154,10 @@ class _AddVinyleSheetState extends ConsumerState<AddVinyleSheet> {
                 ),
               ),
             ),
-            Text('Ajouter un vinyle', style: theme.textTheme.titleLarge),
+            Text(
+              isEditing ? 'Modifier le vinyle' : 'Ajouter un vinyle',
+              style: theme.textTheme.titleLarge,
+            ),
             const SizedBox(height: 20),
 
             // Titre (album)
@@ -144,7 +195,9 @@ class _AddVinyleSheetState extends ConsumerState<AddVinyleSheet> {
               validator: (v) {
                 if (v == null || v.trim().isEmpty) return null;
                 final year = int.tryParse(v);
-                if (year == null || year < 1900 || year > 2100) return 'Invalide';
+                if (year == null || year < 1900 || year > 2100) {
+                  return 'Invalide';
+                }
                 return null;
               },
             ),
@@ -191,6 +244,85 @@ class _AddVinyleSheetState extends ConsumerState<AddVinyleSheet> {
               selected: {_statut},
               onSelectionChanged: (s) => setState(() => _statut = s.first),
             ),
+
+            // ── Acquisition (toujours visible) ────────────────────────
+            ...[
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest
+                      .withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: theme.colorScheme.outlineVariant,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.shopping_bag_outlined,
+                          size: 18,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Acquisition',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    SegmentedButton<ModeAcquisition>(
+                      segments: const [
+                        ButtonSegment(
+                          value: ModeAcquisition.achete,
+                          label: Text('Acheté'),
+                          icon: Icon(Icons.shopping_bag_outlined),
+                        ),
+                        ButtonSegment(
+                          value: ModeAcquisition.cadeau,
+                          label: Text('Cadeau'),
+                          icon: Icon(Icons.card_giftcard_outlined),
+                        ),
+                      ],
+                      selected: {_modeAcquisition},
+                      onSelectionChanged: (s) =>
+                          setState(() => _modeAcquisition = s.first),
+                    ),
+                    if (_modeAcquisition == ModeAcquisition.achete) ...[
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _prixCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Prix payé (€)',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.euro_outlined),
+                          hintText: '0.00',
+                        ),
+                        keyboardType:
+                            const TextInputType.numberWithOptions(decimal: true),
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) return null;
+                          if (double.tryParse(
+                                  v.trim().replaceAll(',', '.')) ==
+                              null) {
+                            return 'Montant invalide';
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
 
             // Souhaits
@@ -205,8 +337,8 @@ class _AddVinyleSheetState extends ConsumerState<AddVinyleSheet> {
 
             FilledButton.icon(
               onPressed: _valider,
-              icon: const Icon(Icons.add),
-              label: const Text('Ajouter le vinyle'),
+              icon: Icon(isEditing ? Icons.check : Icons.add),
+              label: Text(isEditing ? 'Enregistrer' : 'Ajouter le vinyle'),
             ),
           ],
         ),

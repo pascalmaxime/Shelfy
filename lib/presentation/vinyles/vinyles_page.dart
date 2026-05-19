@@ -2,9 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../data/models/discogs_result.dart';
 import '../../domain/entities/media_item.dart';
 import '../../features/vinyles/vinyles_api_provider.dart';
 import '../../features/vinyles/vinyles_provider.dart';
+import '../shared/api_preview_sheet.dart';
 import '../shared/api_result_card.dart';
 import '../shared/empty_state.dart';
 import '../shared/media_card.dart';
@@ -43,7 +45,8 @@ class _VinylesPageState extends ConsumerState<VinylesPage> {
     ref.read(vinyleSearchQueryProvider.notifier).state = '';
   }
 
-  void _openAddSheet({Vinyle? initial}) {
+  /// Tap sur le corps de la carte → aperçu, puis ouvre le formulaire.
+  void _openPreview(DiscogsResult result) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -51,7 +54,51 @@ class _VinylesPageState extends ConsumerState<VinylesPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => AddVinyleSheet(initial: initial),
+      builder: (sheetCtx) => ApiPreviewSheet(
+        titre: result.titre,
+        sousTitre: result.artiste,
+        annee: result.annee,
+        genre: result.genreFr,
+        imageUrl: result.imageUrl,
+        typeIcon: Icons.album_outlined,
+        popAfterAdd: false, // on gère la navigation manuellement
+        onAjouter: () async {
+          Navigator.of(sheetCtx).pop(); // ferme la preview
+          await Future.delayed(const Duration(milliseconds: 200));
+          if (!mounted) return;
+          _openAddSheet(initial: result.toVinyle()); // ouvre le formulaire
+        },
+      ),
+    );
+  }
+
+  void _openAddSheet({Vinyle? initial, String? existingId}) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => AddVinyleSheet(
+        initial: initial,
+        existingId: existingId,
+        onSaved: (vinyle) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context)
+            ..clearSnackBars()
+            ..showSnackBar(SnackBar(
+              duration: const Duration(seconds: 6),
+              content: Text(existingId != null
+                  ? '"${vinyle.titre}" mis à jour !'
+                  : '"${vinyle.titre}" ajouté à ta collection !'),
+              action: SnackBarAction(
+                label: 'Voir',
+                onPressed: () => context.push('/detail', extra: vinyle),
+              ),
+            ));
+        },
+      ),
     );
   }
 
@@ -111,16 +158,9 @@ class _VinylesPageState extends ConsumerState<VinylesPage> {
         _ApiSection(
           isSearching: isSearching,
           apiQuery: apiQuery,
-          onAjouter: (vinyle) {
-            ref.read(vinylesProvider.notifier).ajouter(vinyle);
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('"${vinyle.titre}" ajouté à ta collection !'),
-              action: SnackBarAction(
-                label: 'Voir',
-                onPressed: () => context.push('/detail', extra: vinyle),
-              ),
-            ));
-          },
+          // Bouton "+" → ouvre le formulaire pré-rempli (pas d'ajout direct)
+          onAjouter: (vinyle) => _openAddSheet(initial: vinyle),
+          onTap: _openPreview,
         ),
 
         // ── Ma collection ─────────────────────────────────────────
@@ -203,11 +243,13 @@ class _ApiSection extends ConsumerWidget {
     required this.isSearching,
     required this.apiQuery,
     required this.onAjouter,
+    this.onTap,
   });
 
   final bool isSearching;
   final String apiQuery;
   final void Function(Vinyle vinyle) onAjouter;
+  final void Function(DiscogsResult)? onTap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -255,6 +297,7 @@ class _ApiSection extends ConsumerWidget {
                             imageUrl: r.imageUrl,
                             typeIcon: Icons.album_outlined,
                             onAjouter: () => onAjouter(r.toVinyle()),
+                            onTap: () => onTap?.call(r),
                           );
                         },
                         childCount: items.length,
@@ -299,6 +342,7 @@ class _ApiSection extends ConsumerWidget {
                         imageUrl: r.imageUrl,
                         typeIcon: Icons.album_outlined,
                         onAjouter: () => onAjouter(r.toVinyle()),
+                        onTap: () => onTap?.call(r),
                       ),
                     );
                   },

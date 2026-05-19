@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../../domain/entities/media_item.dart';
 import '../../features/films/films_provider.dart';
 import '../../features/livres/livres_provider.dart';
+import '../../features/vinyles/vinyles_api_provider.dart';
 import '../../features/vinyles/vinyles_provider.dart';
 import '../shared/star_rating.dart';
+import '../vinyles/add_vinyle_sheet.dart';
 
 class DetailPage extends ConsumerStatefulWidget {
   const DetailPage({super.key, required this.itemInitial});
@@ -192,6 +194,35 @@ class _DetailPageState extends ConsumerState<DetailPage> {
             ),
             title: Text(item.titre, overflow: TextOverflow.ellipsis),
             actions: [
+              // Bouton édition — uniquement pour les vinyles
+              if (item case Vinyle v)
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined),
+                  tooltip: 'Modifier le vinyle',
+                  onPressed: () => showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    useSafeArea: true,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.vertical(top: Radius.circular(24)),
+                    ),
+                    builder: (_) => AddVinyleSheet(
+                      initial: v,
+                      existingId: v.id,
+                      onSaved: (updated) {
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context)
+                          ..clearSnackBars()
+                          ..showSnackBar(SnackBar(
+                            duration: const Duration(seconds: 2),
+                            content:
+                                Text('"${updated.titre}" mis à jour !'),
+                          ));
+                      },
+                    ),
+                  ),
+                ),
               IconButton(
                 onPressed: _toggleSouhaits,
                 icon: Icon(
@@ -381,6 +412,18 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                     _DescriptionText(text: _description!),
                   ],
 
+                  // ── Vinyle : acquisition + valeur marché ─────────────
+                  if (_item case Vinyle v) ...[
+                    const SizedBox(height: 28),
+                    const Divider(),
+                    const SizedBox(height: 16),
+                    _VinyleAcquisitionSection(vinyle: v, cs: cs, theme: theme),
+                    if (v.discogsId != null) ...[
+                      const SizedBox(height: 20),
+                      _VinyleMarketSection(vinyle: v),
+                    ],
+                  ],
+
                   const SizedBox(height: 28),
                   const Divider(),
                   const SizedBox(height: 20),
@@ -445,6 +488,288 @@ class _TypeBadge extends StatelessWidget {
               fontSize: 11, color: foreground, fontWeight: FontWeight.w700),
         ),
       );
+}
+
+// ── Section acquisition vinyle ────────────────────────────────────────────────
+
+class _VinyleAcquisitionSection extends StatelessWidget {
+  const _VinyleAcquisitionSection({
+    required this.vinyle,
+    required this.cs,
+    required this.theme,
+  });
+  final Vinyle vinyle;
+  final ColorScheme cs;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final mode = vinyle.modeAcquisition;
+    final prix = vinyle.prixAchat;
+
+    if (mode == null && prix == null) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'ACQUISITION',
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: cs.onSurfaceVariant,
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            if (mode != null) ...[
+              Icon(
+                mode == ModeAcquisition.achete
+                    ? Icons.shopping_bag_outlined
+                    : Icons.card_giftcard_outlined,
+                size: 16,
+                color: cs.primary,
+              ),
+              const SizedBox(width: 6),
+              Text(mode.label, style: theme.textTheme.bodyMedium),
+            ],
+            if (mode != null && prix != null) const SizedBox(width: 16),
+            if (prix != null) ...[
+              Icon(Icons.euro_outlined, size: 16, color: cs.primary),
+              const SizedBox(width: 4),
+              Text(
+                '${prix.toStringAsFixed(2)} €',
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(fontWeight: FontWeight.w600),
+              ),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+// ── Section valeur marché Discogs ─────────────────────────────────────────────
+
+class _VinyleMarketSection extends ConsumerWidget {
+  const _VinyleMarketSection({required this.vinyle});
+  final Vinyle vinyle;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final statsAsync = ref.watch(vinyleMarketStatsProvider(vinyle.discogsId!));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'VALEUR MARCHÉ',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: cs.onSurfaceVariant,
+                letterSpacing: 1.2,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Tooltip(
+              message: 'Prix les plus bas sur Discogs Marketplace (en USD)',
+              child: Icon(
+                Icons.info_outline_rounded,
+                size: 14,
+                color: cs.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        statsAsync.when(
+          loading: () => const SizedBox(
+            height: 24,
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 10),
+                Text('Chargement des prix…'),
+              ],
+            ),
+          ),
+          error: (e, _) => Text(
+            'Données marché indisponibles.',
+            style:
+                theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+          ),
+          data: (stats) {
+            if (stats == null || stats.lowestPrice == null) {
+              return Text(
+                'Aucune annonce active sur Discogs.',
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: cs.onSurfaceVariant),
+              );
+            }
+            final marketPrice = stats.lowestPrice!;
+            final prixAchat = vinyle.prixAchat;
+            // Discogs renvoie les prix en USD — on affiche tel quel
+            final diff = prixAchat != null ? marketPrice - prixAchat : null;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    // Prix marché
+                    _PriceBox(
+                      label: 'Prix marché',
+                      value: '\$${marketPrice.toStringAsFixed(2)}',
+                      subtitle: stats.numForSale != null
+                          ? '${stats.numForSale} annonce${stats.numForSale! > 1 ? 's' : ''}'
+                          : null,
+                      icon: Icons.store_outlined,
+                      cs: cs,
+                      theme: theme,
+                    ),
+                    if (prixAchat != null) ...[
+                      const SizedBox(width: 12),
+                      _PriceBox(
+                        label: 'Payé',
+                        value: '${prixAchat.toStringAsFixed(2)} €',
+                        icon: Icons.shopping_bag_outlined,
+                        cs: cs,
+                        theme: theme,
+                      ),
+                    ],
+                  ],
+                ),
+                if (diff != null) ...[
+                  const SizedBox(height: 10),
+                  _GainLossBadge(diffUsd: diff, cs: cs, theme: theme),
+                ],
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _PriceBox extends StatelessWidget {
+  const _PriceBox({
+    required this.label,
+    required this.value,
+    this.subtitle,
+    required this.icon,
+    required this.cs,
+    required this.theme,
+  });
+  final String label;
+  final String value;
+  final String? subtitle;
+  final IconData icon;
+  final ColorScheme cs;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) => Expanded(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: cs.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: cs.outlineVariant),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, size: 14, color: cs.primary),
+                  const SizedBox(width: 4),
+                  Text(
+                    label,
+                    style: theme.textTheme.labelSmall
+                        ?.copyWith(color: cs.onSurfaceVariant),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: theme.textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              if (subtitle != null)
+                Text(
+                  subtitle!,
+                  style: theme.textTheme.labelSmall
+                      ?.copyWith(color: cs.onSurfaceVariant),
+                ),
+            ],
+          ),
+        ),
+      );
+}
+
+class _GainLossBadge extends StatelessWidget {
+  const _GainLossBadge({
+    required this.diffUsd,
+    required this.cs,
+    required this.theme,
+  });
+  final double diffUsd;
+  final ColorScheme cs;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final isGain = diffUsd >= 0;
+    final color = isGain ? Colors.green.shade600 : cs.error;
+    final bgColor = isGain
+        ? Colors.green.withValues(alpha: 0.12)
+        : cs.error.withValues(alpha: 0.1);
+    final sign = isGain ? '+' : '';
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isGain ? Icons.trending_up : Icons.trending_down,
+                size: 16,
+                color: color,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '$sign${diffUsd.toStringAsFixed(2)} \$',
+                style: theme.textTheme.labelMedium
+                    ?.copyWith(color: color, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          isGain ? 'plus-value estimée' : 'moins-value estimée',
+          style: theme.textTheme.labelSmall
+              ?.copyWith(color: cs.onSurfaceVariant),
+        ),
+      ],
+    );
+  }
 }
 
 /// Texte de description avec "Voir plus" si le texte est long.

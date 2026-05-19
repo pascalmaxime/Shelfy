@@ -7,6 +7,7 @@ import '../../data/remote/tmdb_service.dart';
 import '../../domain/entities/media_item.dart';
 import '../../features/films/films_api_provider.dart';
 import '../../features/films/films_provider.dart';
+import '../shared/api_preview_sheet.dart';
 import '../shared/api_result_card.dart';
 import '../shared/empty_state.dart';
 import '../shared/media_card.dart';
@@ -59,6 +60,49 @@ class _FilmsPageState extends ConsumerState<FilmsPage> {
     );
   }
 
+  /// Tape sur la carte (corps) : ouvre la prévisualisation avec synopsis.
+  /// Démarre aussi le fetch du réalisateur en arrière-plan.
+  void _openPreview(TmdbResult result) {
+    final directorFuture = _tmdb.fetchDirector(result.id);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => ApiPreviewSheet(
+        titre: result.titre,
+        futureSousTitre: directorFuture,
+        annee: result.annee,
+        genre: result.genre,
+        imageUrl: result.imageUrl,
+        description: result.description,
+        typeIcon: Icons.movie_outlined,
+        onAjouter: () async {
+          String? realisateur;
+          try {
+            realisateur = await directorFuture;
+          } catch (_) {}
+          if (!mounted) return;
+          final film = result.toFilm(realisateur: realisateur);
+          ref.read(filmsProvider.notifier).ajouter(film);
+          if (!mounted) return;
+          ScaffoldMessenger.of(context)
+            ..clearSnackBars()
+            ..showSnackBar(SnackBar(
+              duration: const Duration(seconds: 6),
+              content: Text('"${film.titre}" ajouté à ta collection !'),
+              action: SnackBarAction(
+                label: 'Voir',
+                onPressed: () => context.push('/detail', extra: film),
+              ),
+            ));
+        },
+      ),
+    );
+  }
+
   /// Tape "+" sur une carte API : fetche le réalisateur puis ajoute directement.
   Future<void> _handleAjouter(TmdbResult result) async {
     if (_loadingId != null) return;
@@ -74,13 +118,16 @@ class _FilmsPageState extends ConsumerState<FilmsPage> {
     }
     if (!mounted) return;
     ref.read(filmsProvider.notifier).ajouter(film);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('"${film.titre}" ajouté à ta collection !'),
-      action: SnackBarAction(
-        label: 'Voir',
-        onPressed: () => context.push('/detail', extra: film),
-      ),
-    ));
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(
+        duration: const Duration(seconds: 6),
+        content: Text('"${film.titre}" ajouté à ta collection !'),
+        action: SnackBarAction(
+          label: 'Voir',
+          onPressed: () => context.push('/detail', extra: film),
+        ),
+      ));
   }
 
   @override
@@ -142,6 +189,7 @@ class _FilmsPageState extends ConsumerState<FilmsPage> {
           apiQuery: apiQuery,
           onAjouter: _handleAjouter,
           loadingId: _loadingId,
+          onTap: _openPreview,
         ),
 
         SliverPadding(
@@ -225,12 +273,14 @@ class _ApiSection extends ConsumerWidget {
     required this.apiQuery,
     required this.onAjouter,
     this.loadingId,
+    this.onTap,
   });
 
   final bool isSearching;
   final String apiQuery;
   final Future<void> Function(TmdbResult) onAjouter;
   final int? loadingId;
+  final void Function(TmdbResult)? onTap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -286,6 +336,9 @@ class _ApiSection extends ConsumerWidget {
                             typeIcon: Icons.movie_outlined,
                             isLoading: loadingId == r.id,
                             onAjouter: () => onAjouter(r),
+                            onTap: loadingId == null
+                                ? () => onTap?.call(r)
+                                : null,
                           );
                         },
                         childCount: items.length,
@@ -332,6 +385,9 @@ class _ApiSection extends ConsumerWidget {
                         typeIcon: Icons.movie_outlined,
                         isLoading: loadingId == r.id,
                         onAjouter: () => onAjouter(r),
+                        onTap: loadingId == null
+                            ? () => onTap?.call(r)
+                            : null,
                       ),
                     );
                   },

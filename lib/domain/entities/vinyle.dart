@@ -9,6 +9,16 @@ extension StatutVinyleLabel on StatutVinyle {
       };
 }
 
+/// Comment le vinyle a été obtenu.
+enum ModeAcquisition { achete, cadeau }
+
+extension ModeAcquisitionLabel on ModeAcquisition {
+  String get label => switch (this) {
+        ModeAcquisition.achete => 'Acheté',
+        ModeAcquisition.cadeau => 'Cadeau',
+      };
+}
+
 @immutable
 final class Vinyle extends MediaItem {
   @override
@@ -27,6 +37,15 @@ final class Vinyle extends MediaItem {
   final StatutVinyle statut;
   final double? note; // 0.5 – 5.0, null = non noté
 
+  /// ID de la release Discogs (pour récupérer le prix marché).
+  final int? discogsId;
+
+  /// Prix payé lors de l'acquisition (en euros).
+  final double? prixAchat;
+
+  /// Mode d'acquisition : acheté ou cadeau.
+  final ModeAcquisition? modeAcquisition;
+
   const Vinyle({
     required this.id,
     required this.titre,
@@ -38,6 +57,9 @@ final class Vinyle extends MediaItem {
     this.statut = StatutVinyle.souhaite,
     this.enSouhaits = false,
     this.note,
+    this.discogsId,
+    this.prixAchat,
+    this.modeAcquisition,
   });
 
   Vinyle copyWith({
@@ -51,6 +73,11 @@ final class Vinyle extends MediaItem {
     bool? enSouhaits,
     double? note,
     bool clearNote = false,
+    int? discogsId,
+    double? prixAchat,
+    bool clearPrixAchat = false,
+    ModeAcquisition? modeAcquisition,
+    bool clearModeAcquisition = false,
   }) =>
       Vinyle(
         id: id,
@@ -63,5 +90,10 @@ final class Vinyle extends MediaItem {
         statut: statut ?? this.statut,
         enSouhaits: enSouhaits ?? this.enSouhaits,
         note: clearNote ? null : (note ?? this.note),
+        discogsId: discogsId ?? this.discogsId,
+        prixAchat: clearPrixAchat ? null : (prixAchat ?? this.prixAchat),
+        modeAcquisition: clearModeAcquisition
+            ? null
+            : (modeAcquisition ?? this.modeAcquisition),
       );
 }

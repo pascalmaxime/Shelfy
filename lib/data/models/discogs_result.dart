@@ -103,5 +103,6 @@ class DiscogsResult {
         imageUrl: imageUrl,
         genre: genreFr, // Genre mappé vers les options du formulaire
         statut: StatutVinyle.souhaite,
+        discogsId: id, // Conservé pour le fetch du prix marché
       );
 }

@@ -17,11 +17,4 @@ class AppTheme {
     );
   }
 
-  static ThemeData get greyTheme {
-    return ThemeData(
-      useMaterial3: true,
-      colorSchemeSeed: Colors.blueGrey,
-      brightness: Brightness.light,
-    );
-  }
 }

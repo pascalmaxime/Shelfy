@@ -2,9 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../data/models/google_book_result.dart';
 import '../../domain/entities/media_item.dart';
 import '../../features/livres/livres_api_provider.dart';
 import '../../features/livres/livres_provider.dart';
+import '../shared/api_preview_sheet.dart';
 import '../shared/api_result_card.dart';
 import '../shared/empty_state.dart';
 import '../shared/media_card.dart';
@@ -41,6 +43,41 @@ class _LivresPageState extends ConsumerState<LivresPage> {
     _searchCtrl.clear();
     setState(() => _localQuery = '');
     ref.read(livreSearchQueryProvider.notifier).state = '';
+  }
+
+  void _openPreview(GoogleBookResult result) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => ApiPreviewSheet(
+        titre: result.titre,
+        sousTitre: result.auteur,
+        annee: result.annee,
+        genre: result.genreFr,
+        imageUrl: result.imageUrl,
+        description: result.description,
+        typeIcon: Icons.menu_book_outlined,
+        onAjouter: () async {
+          final livre = result.toLivre();
+          ref.read(livresProvider.notifier).ajouter(livre);
+          if (!mounted) return;
+          ScaffoldMessenger.of(context)
+            ..clearSnackBars()
+            ..showSnackBar(SnackBar(
+              duration: const Duration(seconds: 6),
+              content: Text('"${livre.titre}" ajouté à ta collection !'),
+              action: SnackBarAction(
+                label: 'Voir',
+                onPressed: () => context.push('/detail', extra: livre),
+              ),
+            ));
+        },
+      ),
+    );
   }
 
   void _openAddSheet({Livre? initial}) {
@@ -113,14 +150,18 @@ class _LivresPageState extends ConsumerState<LivresPage> {
           apiQuery: apiQuery,
           onAjouter: (livre) {
             ref.read(livresProvider.notifier).ajouter(livre);
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('"${livre.titre}" ajouté à ta collection !'),
-              action: SnackBarAction(
-                label: 'Voir',
-                onPressed: () => context.push('/detail', extra: livre),
-              ),
-            ));
+            ScaffoldMessenger.of(context)
+              ..clearSnackBars()
+              ..showSnackBar(SnackBar(
+                duration: const Duration(seconds: 6),
+                content: Text('"${livre.titre}" ajouté à ta collection !'),
+                action: SnackBarAction(
+                  label: 'Voir',
+                  onPressed: () => context.push('/detail', extra: livre),
+                ),
+              ));
           },
+          onTap: _openPreview,
         ),
 
         // ── Ma collection ─────────────────────────────────────────
@@ -200,11 +241,13 @@ class _ApiSection extends ConsumerWidget {
     required this.isSearching,
     required this.apiQuery,
     required this.onAjouter,
+    this.onTap,
   });
 
   final bool isSearching;
   final String apiQuery;
   final void Function(Livre livre) onAjouter;
+  final void Function(GoogleBookResult)? onTap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -252,6 +295,7 @@ class _ApiSection extends ConsumerWidget {
                             imageUrl: r.imageUrl,
                             typeIcon: Icons.menu_book_outlined,
                             onAjouter: () => onAjouter(r.toLivre()),
+                            onTap: () => onTap?.call(r),
                           );
                         },
                         childCount: items.length,
@@ -309,6 +353,7 @@ class _ApiSection extends ConsumerWidget {
                               imageUrl: r.imageUrl,
                               typeIcon: Icons.menu_book_outlined,
                               onAjouter: () => onAjouter(r.toLivre()),
+                              onTap: () => onTap?.call(r),
                             ),
                           );
                         },

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/media_item.dart';
+import '../../features/vinyles/vinyles_api_provider.dart';
 import 'star_rating.dart';
 
 /// Carte d'affichage unifiée pour Film, Livre et Vinyle.
@@ -180,6 +182,26 @@ class MediaCard extends StatelessWidget {
                     ),
                   ),
                 ],
+                // Prix payé + gain/perte (vinyles uniquement)
+                if (item case Vinyle v when v.prixAchat != null) ...[
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Icon(Icons.euro_outlined,
+                          size: 11, color: cs.primary),
+                      const SizedBox(width: 2),
+                      Text(
+                        'Payé ${v.prixAchat!.toStringAsFixed(2)} €',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: cs.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (v.discogsId != null)
+                    _VinyleGainLoss(vinyle: v),
+                ],
                 const SizedBox(height: 5),
                 StarRating(
                   note: _note,
@@ -239,6 +261,55 @@ class _Placeholder extends StatelessWidget {
           child: Icon(icon, size: 52, color: Colors.grey.shade400),
         ),
       );
+}
+
+/// Badge gain/perte marché pour les vinyles avec discogsId + prixAchat.
+class _VinyleGainLoss extends ConsumerWidget {
+  const _VinyleGainLoss({required this.vinyle});
+  final Vinyle vinyle;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final statsAsync =
+        ref.watch(vinyleMarketStatsProvider(vinyle.discogsId!));
+
+    return statsAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (err, stack) => const SizedBox.shrink(),
+      data: (stats) {
+        final marketPrice = stats?.lowestPrice;
+        if (marketPrice == null || vinyle.prixAchat == null) {
+          return const SizedBox.shrink();
+        }
+        final diff = marketPrice - vinyle.prixAchat!;
+        final isGain = diff >= 0;
+        final color =
+            isGain ? Colors.green.shade400 : Theme.of(context).colorScheme.error;
+
+        return Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Row(
+            children: [
+              Icon(
+                isGain ? Icons.trending_up : Icons.trending_down,
+                size: 10,
+                color: color,
+              ),
+              const SizedBox(width: 2),
+              Text(
+                '${isGain ? '+' : ''}${diff.toStringAsFixed(2)}\$',
+                style: TextStyle(
+                  fontSize: 9,
+                  color: color,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _Badge extends StatelessWidget {

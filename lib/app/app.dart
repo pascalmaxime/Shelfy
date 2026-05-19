@@ -13,13 +13,13 @@ class ShelfyApp extends ConsumerWidget {
 
     return MaterialApp.router(
       title: 'Shelfy',
-      theme: themeOption == AppThemeOption.grey
-          ? AppTheme.greyTheme
-          : AppTheme.lightTheme,
+      theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: themeOption == AppThemeOption.dark
-          ? ThemeMode.dark
-          : ThemeMode.light,
+      themeMode: themeOption == AppThemeOption.system
+          ? ThemeMode.system
+          : themeOption == AppThemeOption.dark
+              ? ThemeMode.dark
+              : ThemeMode.light,
       routerConfig: appRouter,
       debugShowCheckedModeBanner: false,
     );
